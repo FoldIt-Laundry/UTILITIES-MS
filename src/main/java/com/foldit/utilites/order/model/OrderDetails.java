@@ -4,6 +4,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
+import static com.foldit.utilites.helper.GenerateOtp.generate4DigitOtpCode;
+
 @Document(collection = "OrderDetails")
 public class OrderDetails {
     private String id;
@@ -19,6 +21,15 @@ public class OrderDetails {
     private CostStructure billDetails;
     private String couponId;
     private Double timeLeftForDelivery = 8.00;
+    private String checkOutOtp = generate4DigitOtpCode();
+
+    public String getCheckOutOtp() {
+        return checkOutOtp;
+    }
+
+    public void setCheckOutOtp(String checkOutOtp) {
+        this.checkOutOtp = checkOutOtp;
+    }
 
     public String getId() {
         return id;
