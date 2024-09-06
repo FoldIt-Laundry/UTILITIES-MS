@@ -3,8 +3,7 @@ package com.foldit.utilites.store.model;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class NearestStoreAvailableRespone {
     private String storeId;
     private String shopName;

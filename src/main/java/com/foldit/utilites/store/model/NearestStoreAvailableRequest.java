@@ -1,10 +1,5 @@
 package com.foldit.utilites.store.model;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-
-@NoArgsConstructor
-@AllArgsConstructor
 public class NearestStoreAvailableRequest {
     private Double xCordinates;
     private Double yCordinates;
