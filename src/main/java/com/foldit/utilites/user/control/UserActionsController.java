@@ -33,8 +33,7 @@ public class UserActionsController {
             LOGGER.info("saveNewUserLocation(): Request received to store the new user location: {} and auth-Token: {}", toJson(userLocation), authToken);
             onBoardingNewUserLocation = userActionsService.saveNewUserLocation(userLocation, authToken);
             return new ResponseEntity<>(onBoardingNewUserLocation, HttpStatus.OK);
-        }
-        catch (AuthTokenValidationException ex) {
+        } catch (AuthTokenValidationException ex) {
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
             LOGGER.error("saveNewUserLocation(): Exception occured while saving the new user location, Exception: %s", ex.getMessage());
@@ -56,8 +55,5 @@ public class UserActionsController {
             return new ResponseEntity<>(new UserDetails(), HttpStatus.BAD_REQUEST);
         }
     }
-
-    // Checkout api
-
 
 }

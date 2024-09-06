@@ -1,5 +1,8 @@
 package com.foldit.utilites.order.model;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "OrderDetails")
 public class WorkflowTransitionDetails {
     private String userId;
     private String userName;

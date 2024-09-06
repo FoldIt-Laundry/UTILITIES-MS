@@ -1,8 +1,8 @@
 package com.foldit.utilites.order.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
+import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.order.model.MetaDataOrderDetailsInUserCollection;
 import com.foldit.utilites.order.service.OrdersService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +38,21 @@ public class OrdersController {
         }
     }
 
+    @GetMapping("order/getAllCompleteOrderDetailsFromUserId")
+    public ResponseEntity<List<OrderDetails>> getAllOrderDetailsFromUserId(@RequestParam String authToken, @RequestParam String userId) {
+        List<OrderDetails> allOrderDetails;
+        try {
+            LOGGER.info("getAllOrderDetailsFromUserId(): Initiating request to get the all order details from userId: {} and authToken: {}", userId, authToken);
+            allOrderDetails = ordersService.getAllOrderDetailsFromUserId(authToken, userId);
+            return new ResponseEntity<>(allOrderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("getAllOrderDetailsFromUserId(): Exception occured while getting all the order details from userId: {}, Exception: {}", userId ,ex.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("order/placeOrder")
     public ResponseEntity<OrderDetails> placeOrder(@RequestParam String authToken, @RequestBody OrderDetails orderDetails) {
         OrderDetails orderDetailsResponseFromMongo;
@@ -53,17 +68,17 @@ public class OrdersController {
         }
     }
 
-    @GetMapping("order/getUserOrderHistoryFromUserId")
-    public ResponseEntity<List<MetaDataOrderDetailsInUserCollection>> getUserOrderHistoryFromUserId(@RequestParam String authToken, @RequestParam String userId) {
-        List<MetaDataOrderDetailsInUserCollection> metaDataOrderDetailsInUserCollections;
+    @GetMapping("order/getAllBasicOrderDetailsFromUserId")
+    public ResponseEntity<List<BasicOrderDetails>> getAllBasicOrderDetailsFromUserId(@RequestParam String authToken, @RequestParam String userId) {
+        List<BasicOrderDetails> metaDataOrderDetailsInUserCollections;
         try {
-            LOGGER.info("getUserOrderHistoryFromUserId(): Initating request to get user order history from userId: {} and authToken: {}", userId, authToken);
+            LOGGER.info("getAllBasicOrderDetailsFromUserId(): Initating request to get user basic order history details from userId: {} and authToken: {}", userId, authToken);
             metaDataOrderDetailsInUserCollections = ordersService.getUserOrderHistoryFromUserId(authToken, userId);
             return new ResponseEntity<>(metaDataOrderDetailsInUserCollections, HttpStatus.OK);
         } catch (AuthTokenValidationException ex) {
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
-            LOGGER.error("saveNewUserLocation(): Exception occured while saving the new user location, Exception: %s", ex.getMessage());
+            LOGGER.error("getAllBasicOrderDetailsFromUserId(): Exception occured while saving the new user location, Exception: %s", ex.getMessage());
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }

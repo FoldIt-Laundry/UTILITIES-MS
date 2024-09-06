@@ -1,10 +1,13 @@
 package com.foldit.utilites.order.model;
 
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Document(collection = "OrderDetails")
 public class Services {
     private String serviceName;
     private String serviceId;
-    private Double clothesKgSize;
-    private Integer numberOfIronedClothes;
+    private double clothesKgSize;
+    private int numberOfIronedClothes;
 
     public String getServiceName() {
         return serviceName;
@@ -22,19 +25,19 @@ public class Services {
         this.serviceId = serviceId;
     }
 
-    public Double getClothesKgSize() {
+    public double getClothesKgSize() {
         return clothesKgSize;
     }
 
-    public void setClothesKgSize(Double clothesKgSize) {
+    public void setClothesKgSize(double clothesKgSize) {
         this.clothesKgSize = clothesKgSize;
     }
 
-    public Integer getNumberOfIronedClothes() {
+    public int getNumberOfIronedClothes() {
         return numberOfIronedClothes;
     }
 
-    public void setNumberOfIronedClothes(Integer numberOfIronedClothes) {
+    public void setNumberOfIronedClothes(int numberOfIronedClothes) {
         this.numberOfIronedClothes = numberOfIronedClothes;
     }
 }

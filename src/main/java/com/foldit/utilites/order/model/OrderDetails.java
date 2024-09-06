@@ -19,9 +19,18 @@ public class OrderDetails {
     private String orderDeliveryTimeStamp;
     private String orderOrderedTimeStamp;
     private CostStructure billDetails;
-    private String couponId;
+
+    private Double rating;
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp = generate4DigitOtpCode();
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
 
     public String getCheckOutOtp() {
         return checkOutOtp;
@@ -119,13 +128,6 @@ public class OrderDetails {
         this.billDetails = billDetails;
     }
 
-    public String getCouponId() {
-        return couponId;
-    }
-
-    public void setCouponId(String couponId) {
-        this.couponId = couponId;
-    }
 
     public Double getTimeLeftForDelivery() {
         return timeLeftForDelivery;

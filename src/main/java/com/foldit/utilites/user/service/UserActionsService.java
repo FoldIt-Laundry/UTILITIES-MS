@@ -4,7 +4,6 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.tokenverification.service.TokenVerificationService;
 import com.foldit.utilites.user.dao.IUserDetails;
-import com.foldit.utilites.user.dao.INewUserLocation;
 import com.foldit.utilites.user.model.OnBoardNewUserLocation;
 import com.foldit.utilites.user.model.UserDetails;
 import com.foldit.utilites.user.model.UserLocation;
@@ -16,6 +15,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserActionsService {
@@ -26,14 +26,12 @@ public class UserActionsService {
     private TokenVerificationService tokenVerificationService;
 
     @Autowired
-    private INewUserLocation iNewUserLocation;
-
-    @Autowired
     private IUserDetails iUserDetails;
 
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @Transactional
     public OnBoardNewUserLocation saveNewUserLocation(OnBoardNewUserLocation onBoardNewUserLocation, String authToken) {
         try {
             if(!tokenVerificationService.validateAuthToken(authToken)) {
@@ -52,6 +50,7 @@ public class UserActionsService {
         }
     }
 
+    @Transactional(readOnly = true)
     public UserDetails getUserDetailsFromUserId(String authToken, String userId) {
         try {
             if(!tokenVerificationService.validateAuthToken(authToken)) {

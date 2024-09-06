@@ -11,8 +11,6 @@ public class UserDetails {
     private String name;
     private String mobileNumber;
     private List<UserLocation> locations;
-    private List<MetaDataOrderDetailsInUserCollection> orderHistory;
-
     public String getId() {
         return id;
     }
@@ -45,11 +43,4 @@ public class UserDetails {
         this.locations = locations;
     }
 
-    public List<MetaDataOrderDetailsInUserCollection> getOrderHistory() {
-        return orderHistory;
-    }
-
-    public void setOrderHistory(List<MetaDataOrderDetailsInUserCollection> orderHistory) {
-        this.orderHistory = orderHistory;
-    }
 }

@@ -23,7 +23,7 @@ public class HomePageController {
     private HomePageService homePageService;
 
     @GetMapping("/homepage/serviceAvailable")
-    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestParam(required = true) String authToken) {
+    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestParam(required = true) String authToken, @RequestParam String mobileNumber) {
         ServiceAvailable serviceAvailable;
         try {
             LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services : {}", authToken);

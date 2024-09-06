@@ -1,15 +1,12 @@
-package com.foldit.utilites.user.model;
+package com.foldit.utilites.store.model;
 
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
-@Document(collection = "UserDetails")
-public class UserLocation {
-    @Id
-    private String id = String.valueOf(ObjectId.get());
+@Document(collection = "StoreInformation")
+public class StoreLocation {
+    private String id;
     private String addressLine1;
     private String addressLine2;
     private String city;
@@ -17,33 +14,6 @@ public class UserLocation {
     private String postalCode;
     private String country;
     private List<Double> coordinates;
-    private String locationType;
-    private String othersLocationName;
-    private String completeAddress;
-
-    public String getCompleteAddress() {
-        return completeAddress;
-    }
-
-    public void setCompleteAddress(String completeAddress) {
-        this.completeAddress = completeAddress;
-    }
-
-    public String getOthersLocationName() {
-        return othersLocationName;
-    }
-
-    public void setOthersLocationName(String othersLocationName) {
-        this.othersLocationName = othersLocationName;
-    }
-
-    public String getLocationType() {
-        return locationType;
-    }
-
-    public void setLocationType(String locationType) {
-        this.locationType = locationType;
-    }
 
     public String getId() {
         return id;
