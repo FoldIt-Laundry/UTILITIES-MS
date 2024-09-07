@@ -18,6 +18,15 @@ public class StoreDetails {
     private String operatingHourStartTime;
     private String operatingHourEndTime;
     private StoreLocation storeLocation;
+    private List<ServiceOffered> serviceOffered;
+
+    public List<ServiceOffered> getServiceOffered() {
+        return serviceOffered;
+    }
+
+    public void setServiceOffered(List<ServiceOffered> serviceOffered) {
+        this.serviceOffered = serviceOffered;
+    }
 
     public String getId() {
         return id;

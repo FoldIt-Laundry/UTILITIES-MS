@@ -24,11 +24,11 @@ public class HomePageController {
     private HomePageService homePageService;
 
     @GetMapping("/homepage/serviceAvailable")
-    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestHeader(value="authToken") String authToken, @RequestParam String userId) {
+    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestHeader(value="authToken") String authToken, @RequestParam(required = false) String userId,@RequestParam(required = false) String mobileNumber) {
         ServiceAvailable serviceAvailable;
         try {
-            LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services for authToken: {} and userId: {}", authToken, userId);
-            serviceAvailable= homePageService.getAllAvailableService(authToken, userId);
+            LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services for authToken: {} and userId: {} or mobileNumber: {}", authToken, userId, mobileNumber);
+            serviceAvailable= homePageService.getAllAvailableService(authToken, userId, mobileNumber);
             return new ResponseEntity<>(serviceAvailable, HttpStatus.OK);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());

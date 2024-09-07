@@ -6,6 +6,7 @@ import com.foldit.utilites.homepage.dao.IServiceOffered;
 import com.foldit.utilites.homepage.model.ServiceAvailable;
 import com.foldit.utilites.homepage.model.Services;
 import com.foldit.utilites.tokenverification.service.TokenVerificationService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,13 @@ public class HomePageService {
     @Autowired
     private TokenVerificationService tokenVerificationService;
 
-    public ServiceAvailable getAllAvailableService(String authToken,String userId) {
+    public ServiceAvailable getAllAvailableService(String authToken,String userId, String mobileNumber) {
         List<Services> servicesList;
         try {
-            if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
+            if(StringUtils.isNotBlank(mobileNumber) ) {
+                if(!tokenVerificationService.validateAuthTokenFromMobileNumber(mobileNumber, authToken)) return new ServiceAvailable();
+            }
+            else if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
                 return new ServiceAvailable();
             }
             servicesList = iServiceOffered.findAll();

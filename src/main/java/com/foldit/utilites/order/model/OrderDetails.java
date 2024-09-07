@@ -23,6 +23,15 @@ public class OrderDetails {
     private Double rating;
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp = generate4DigitOtpCode();
+    private String checkInOtp = generate4DigitOtpCode();
+
+    public String getCheckInOtp() {
+        return checkInOtp;
+    }
+
+    public void setCheckInOtp(String checkInOtp) {
+        this.checkInOtp = checkInOtp;
+    }
 
     public Double getRating() {
         return rating;

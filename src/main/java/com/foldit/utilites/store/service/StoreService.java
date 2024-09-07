@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
+import static com.foldit.utilites.store.dto.StoreDetailsConverter.getNearestStoreFromStoreDetails;
 
 @Service
 public class StoreService {
@@ -41,23 +42,22 @@ public class StoreService {
     public NearestStoreAvailableRespone getNearestAvailableStoreDetails(NearestStoreAvailableRequest nearestStoreAvailableRequest,String authToken) {
         NearestStoreAvailableRespone nearestStoreAvailableRespone = new NearestStoreAvailableRespone();
         try {
-
             validateAuthToken(nearestStoreAvailableRequest.getUserId(), authToken);
             Point location = new Point(nearestStoreAvailableRequest.getLatitude(), nearestStoreAvailableRequest.getLongitude());
             Query query = new Query();
             query.addCriteria(Criteria.where("storeLocation.location")
                     .nearSphere(location)
-                    .maxDistance(5000));
+                    .maxDistance(5));
             List<StoreDetails> storeDetailsList = mongoTemplate.find(query, StoreDetails.class, "StoreInformation");
             if(!CollectionUtils.isEmpty(storeDetailsList)) {
                 StoreDetails storeDetails = storeDetailsList.get(0);
-                nearestStoreAvailableRespone = new NearestStoreAvailableRespone(storeDetails.getId(), storeDetails.getName(), storeDetails.getStoreLocation().getAddressLine1());
+                nearestStoreAvailableRespone = getNearestStoreFromStoreDetails(storeDetails);
             }
             return nearestStoreAvailableRespone;
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            // LOGGER.error("saveNewUserLocation(): Exception occured while saving the orderDetails: {} details to monogoDb, Exception: %s", toJson(orderDetails), ex.getMessage());
+            LOGGER.error("getNearestAvailableStoreDetails(): Exception occured while getting the nearest store details: {} , Exception: %s", toJson(nearestStoreAvailableRequest), ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }

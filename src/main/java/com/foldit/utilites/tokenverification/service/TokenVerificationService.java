@@ -29,4 +29,18 @@ public class TokenVerificationService {
         return false;
     }
 
+    public boolean validateAuthTokenFromMobileNumber(String mobileNumber,String authToken) {
+        try {
+            String keyForAuthToken = mobileNumber+"AuthToken";
+            String storedAuthToken = (String) redisTemplate.opsForValue().get(keyForAuthToken);
+            if (storedAuthToken != null && storedAuthToken.equalsIgnoreCase(authToken)) {
+                return true;
+            }
+            return false;
+        } catch (Exception ex) {
+            LOGGER.error("validateAuthToken(): Exception occured while validating the auth token: {}, Exception: {}", authToken, ex.getMessage());
+        }
+        return false;
+    }
+
 }

@@ -3,19 +3,42 @@ package com.foldit.utilites.store.model;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 
 public class NearestStoreAvailableRespone {
     private String storeId;
     private String shopName;
     private String shopAddress;
+    private String operatingHourStartTime;
+    private String operatingHourEndTime;
+    private List<ServiceOffered> serviceOffered;
 
     public NearestStoreAvailableRespone() {
     }
 
-    public NearestStoreAvailableRespone(String storeId, String shopName, String shopAddress) {
-        this.storeId = storeId;
-        this.shopName = shopName;
-        this.shopAddress = shopAddress;
+    public List<ServiceOffered> getServiceOffered() {
+        return serviceOffered;
+    }
+
+    public void setServiceOffered(List<ServiceOffered> serviceOffered) {
+        this.serviceOffered = serviceOffered;
+    }
+
+    public String getOperatingHourStartTime() {
+        return operatingHourStartTime;
+    }
+
+    public void setOperatingHourStartTime(String operatingHourStartTime) {
+        this.operatingHourStartTime = operatingHourStartTime;
+    }
+
+    public String getOperatingHourEndTime() {
+        return operatingHourEndTime;
+    }
+
+    public void setOperatingHourEndTime(String operatingHourEndTime) {
+        this.operatingHourEndTime = operatingHourEndTime;
     }
 
     public String getStoreId() {

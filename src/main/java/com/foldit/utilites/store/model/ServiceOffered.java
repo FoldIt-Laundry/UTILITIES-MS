@@ -1,15 +1,15 @@
-package com.foldit.utilites.homepage.model;
+package com.foldit.utilites.store.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "ServiceOffered")
-public class Services {
-
+@Document(collection = "StoreInformation")
+public class ServiceOffered {
     private String type;
     private String serviceName;
     private String serviceId;
     private String description;
     private double pricing;
+    private double serviceTime;
 
     public String getType() {
         return type;
@@ -49,5 +49,13 @@ public class Services {
 
     public void setPricing(double pricing) {
         this.pricing = pricing;
+    }
+
+    public double getServiceTime() {
+        return serviceTime;
+    }
+
+    public void setServiceTime(double serviceTime) {
+        this.serviceTime = serviceTime;
     }
 }
