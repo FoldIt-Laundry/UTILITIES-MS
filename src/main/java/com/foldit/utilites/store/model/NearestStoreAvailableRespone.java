@@ -9,6 +9,15 @@ public class NearestStoreAvailableRespone {
     private String shopName;
     private String shopAddress;
 
+    public NearestStoreAvailableRespone() {
+    }
+
+    public NearestStoreAvailableRespone(String storeId, String shopName, String shopAddress) {
+        this.storeId = storeId;
+        this.shopName = shopName;
+        this.shopAddress = shopAddress;
+    }
+
     public String getStoreId() {
         return storeId;
     }

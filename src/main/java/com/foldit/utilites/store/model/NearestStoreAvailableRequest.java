@@ -1,22 +1,34 @@
 package com.foldit.utilites.store.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class NearestStoreAvailableRequest {
-    private Double xCordinates;
-    private Double yCordinates;
+    private double latitude;
+    private double longitude;
+    private String userId;
 
-    public Double getxCordinates() {
-        return xCordinates;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setxCordinates(Double xCordinates) {
-        this.xCordinates = xCordinates;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public Double getyCordinates() {
-        return yCordinates;
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setyCordinates(Double yCordinates) {
-        this.yCordinates = yCordinates;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 }

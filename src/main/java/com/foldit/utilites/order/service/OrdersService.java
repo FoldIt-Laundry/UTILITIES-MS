@@ -4,6 +4,7 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.order.dao.IOrderDetails;
 import com.foldit.utilites.order.model.BasicOrderDetails;
+import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.tokenverification.service.TokenVerificationService;
 import org.slf4j.Logger;
@@ -30,14 +31,14 @@ public class OrdersService {
 
 
     @Transactional(readOnly = true)
-    public OrderDetails getOrderDetailsFromOrderId(String authToken, String orderId) {
+    public OrderDetails getOrderDetailsFromOrderId(String authToken, GetOrderDetailsFromOrderIdReq orderDetailsFromOrderIdReq) {
         try {
-            validateAuthToken(authToken);
-            return iOrderDetails.findById(orderId).orElseGet(() -> (new OrderDetails()));
+            validateAuthToken(orderDetailsFromOrderIdReq.getUserId(), authToken);
+            return iOrderDetails.findById(orderDetailsFromOrderIdReq.getOrderId()).orElseGet(() -> (new OrderDetails()));
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            LOGGER.error("saveNewUserLocation(): Exception occured while getting the orderID: {} details from monogoDb, Exception: %s", orderId, ex.getMessage());
+            LOGGER.error("saveNewUserLocation(): Exception occured while getting the order details from req object: {} details from monogoDb, Exception: %s", toJson(orderDetailsFromOrderIdReq), ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }
@@ -45,7 +46,7 @@ public class OrdersService {
     @Transactional(readOnly = true)
     public List<OrderDetails> getAllOrderDetailsFromUserId(String authToken, String userId) {
         try {
-            validateAuthToken(authToken);
+            validateAuthToken(userId, authToken);
             return iOrderDetails.getAllOrdersListFromUserId(userId);
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
@@ -58,7 +59,7 @@ public class OrdersService {
     @Transactional
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
-            validateAuthToken(authToken);
+            validateAuthToken(orderDetails.getUserId(), authToken);
             OrderDetails orderDetailsFromMongo = iOrderDetails.save(orderDetails);
             return orderDetailsFromMongo;
         } catch (AuthTokenValidationException ex) {
@@ -73,7 +74,7 @@ public class OrdersService {
     public List<BasicOrderDetails> getUserOrderHistoryFromUserId(String authToken, String userId) {
         List<BasicOrderDetails> userOrderHistoryDetails = null;
         try {
-            validateAuthToken(authToken);
+            validateAuthToken(userId, authToken);
             return iOrderDetails.getBasicOrderDetailsFromUserId(userId);
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
@@ -83,8 +84,8 @@ public class OrdersService {
         }
     }
 
-    private boolean validateAuthToken(String authToken) {
-        if(!tokenVerificationService.validateAuthToken(authToken)) {
+    private boolean validateAuthToken(String userId, String authToken) {
+        if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
             LOGGER.error("Auth token: {}, Validation failed", authToken);
             throw new AuthTokenValidationException(null);
         }

@@ -34,7 +34,7 @@ public class UserActionsService {
     @Transactional
     public OnBoardNewUserLocation saveNewUserLocation(OnBoardNewUserLocation onBoardNewUserLocation, String authToken) {
         try {
-            if(!tokenVerificationService.validateAuthToken(authToken)) {
+            if(!tokenVerificationService.validateAuthToken(onBoardNewUserLocation.getUserId(), authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }
@@ -53,7 +53,7 @@ public class UserActionsService {
     @Transactional(readOnly = true)
     public UserDetails getUserDetailsFromUserId(String authToken, String userId) {
         try {
-            if(!tokenVerificationService.validateAuthToken(authToken)) {
+            if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }

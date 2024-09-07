@@ -7,6 +7,7 @@ import java.util.List;
 @Document(collection = "StoreInformation")
 public class StoreDetails {
 
+    private String id;
     private String name;
     private List<String> phoneNumber;
     private String email;
@@ -16,8 +17,15 @@ public class StoreDetails {
     private String description;
     private String operatingHourStartTime;
     private String operatingHourEndTime;
-    private String locationInfoRefId;
     private StoreLocation storeLocation;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public StoreLocation getStoreLocation() {
         return storeLocation;
@@ -99,11 +107,4 @@ public class StoreDetails {
         this.operatingHourEndTime = operatingHourEndTime;
     }
 
-    public String getLocationInfoRefId() {
-        return locationInfoRefId;
-    }
-
-    public void setLocationInfoRefId(String locationInfoRefId) {
-        this.locationInfoRefId = locationInfoRefId;
-    }
 }

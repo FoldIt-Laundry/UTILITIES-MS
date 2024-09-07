@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,11 +24,11 @@ public class HomePageController {
     private HomePageService homePageService;
 
     @GetMapping("/homepage/serviceAvailable")
-    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestParam(required = true) String authToken, @RequestParam String mobileNumber) {
+    public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestHeader(value="authToken") String authToken, @RequestParam String userId) {
         ServiceAvailable serviceAvailable;
         try {
-            LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services : {}", authToken);
-            serviceAvailable= homePageService.getAllAvailableService(authToken);
+            LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services for authToken: {} and userId: {}", authToken, userId);
+            serviceAvailable= homePageService.getAllAvailableService(authToken, userId);
             return new ResponseEntity<>(serviceAvailable, HttpStatus.OK);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());

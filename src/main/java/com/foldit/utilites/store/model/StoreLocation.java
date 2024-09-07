@@ -2,8 +2,6 @@ package com.foldit.utilites.store.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-
 @Document(collection = "StoreInformation")
 public class StoreLocation {
     private String id;
@@ -13,8 +11,7 @@ public class StoreLocation {
     private String state;
     private String postalCode;
     private String country;
-    private List<Double> coordinates;
-
+    private LocationCoordinates location;
     public String getId() {
         return id;
     }
@@ -71,11 +68,11 @@ public class StoreLocation {
         this.country = country;
     }
 
-    public List<Double> getCoordinates() {
-        return coordinates;
+    public LocationCoordinates getLocation() {
+        return location;
     }
 
-    public void setCoordinates(List<Double> coordinates) {
-        this.coordinates = coordinates;
+    public void setLocation(LocationCoordinates location) {
+        this.location = location;
     }
 }

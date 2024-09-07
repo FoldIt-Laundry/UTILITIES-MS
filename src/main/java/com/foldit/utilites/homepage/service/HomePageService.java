@@ -23,10 +23,10 @@ public class HomePageService {
     @Autowired
     private TokenVerificationService tokenVerificationService;
 
-    public ServiceAvailable getAllAvailableService(String authToken) {
+    public ServiceAvailable getAllAvailableService(String authToken,String userId) {
         List<Services> servicesList;
         try {
-            if(!tokenVerificationService.validateAuthToken(authToken)) {
+            if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
                 return new ServiceAvailable();
             }
             servicesList = iServiceOffered.findAll();

@@ -1,2 +1,7 @@
 1) From ui we need user location file + one string with final user string
 2) Same for store we need a final string for it
+
+
+1) UserIDRefreshToken
+2) Header mein tokens
+6) Verify and Otp ke lie new token is required static token

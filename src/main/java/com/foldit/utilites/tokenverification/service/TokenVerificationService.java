@@ -15,10 +15,11 @@ public class TokenVerificationService {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    public boolean validateAuthToken(String authToken) {
+    public boolean validateAuthToken(String userId,String authToken) {
         try {
-            String storedOTP = (String) redisTemplate.opsForValue().get(authToken);
-            if (storedOTP != null) {
+            String keyForAuthToken = userId+"AuthToken";
+            String storedAuthToken = (String) redisTemplate.opsForValue().get(keyForAuthToken);
+            if (storedAuthToken != null && storedAuthToken.equalsIgnoreCase(authToken)) {
                 return true;
             }
             return false;
