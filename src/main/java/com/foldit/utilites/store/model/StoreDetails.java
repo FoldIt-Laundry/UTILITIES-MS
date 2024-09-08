@@ -2,6 +2,7 @@ package com.foldit.utilites.store.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "StoreInformation")
@@ -19,6 +20,24 @@ public class StoreDetails {
     private String operatingHourEndTime;
     private StoreLocation storeLocation;
     private List<ServiceOffered> serviceOffered;
+    private List<String> shopAdminIds = new ArrayList<>();
+    private List<String> shopWorkerIds = new ArrayList<>();
+
+    public List<String> getShopAdminIds() {
+        return shopAdminIds;
+    }
+
+    public void setShopAdminIds(List<String> shopAdminIds) {
+        this.shopAdminIds = shopAdminIds;
+    }
+
+    public List<String> getShopWorkerIds() {
+        return shopWorkerIds;
+    }
+
+    public void setShopWorkerIds(List<String> shopWorkerIds) {
+        this.shopWorkerIds = shopWorkerIds;
+    }
 
     public List<ServiceOffered> getServiceOffered() {
         return serviceOffered;
