@@ -54,6 +54,21 @@ public class OrdersController {
         }
     }
 
+    @GetMapping("order/getAllActiveOrderDetailsFromUserId")
+    public ResponseEntity<List<OrderDetails>> getAllActiveOrderDetailsFromUserId(@RequestHeader(value="authToken") String authToken, @RequestParam String userId) {
+        List<OrderDetails> allActiveOrderDetails;
+        try {
+            LOGGER.info("getAllActiveOrderDetailsFromUserId(): Initiating request to get the all active order details from userId: {} and authToken: {}", userId, authToken);
+            allActiveOrderDetails = ordersService.getAllActiveOrderDetailsFromUserId(authToken, userId);
+            return new ResponseEntity<>(allActiveOrderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("getAllActiveOrderDetailsFromUserId(): Exception occured while getting all the active order details from userId: {}, Exception: {}", userId ,ex.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("order/placeOrder")
     public ResponseEntity<OrderDetails> placeOrder(@RequestHeader(value="authToken") String authToken, @RequestBody OrderDetails orderDetails) {
         OrderDetails orderDetailsResponseFromMongo;

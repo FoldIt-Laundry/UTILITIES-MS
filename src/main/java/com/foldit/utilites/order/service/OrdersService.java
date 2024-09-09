@@ -56,6 +56,19 @@ public class OrdersService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<OrderDetails> getAllActiveOrderDetailsFromUserId(String authToken, String userId) {
+        try {
+            validateAuthToken(userId, authToken);
+            return iOrderDetails.getAllActiveOrdersListFromUserId(userId,  "Completed");
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("saveNewUserLocation(): Exception occured while getting all the order details from userId: {} details from monogoDb, Exception: %s", userId, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
     @Transactional
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
