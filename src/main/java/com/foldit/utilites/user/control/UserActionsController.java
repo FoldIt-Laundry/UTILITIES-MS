@@ -16,6 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 
 @RestController
@@ -51,8 +54,23 @@ public class UserActionsController {
         } catch (AuthTokenValidationException ex) {
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
-            LOGGER.error("saveNewUserLocation(): Exception occured while saving the new user location, Exception: %s", ex.getMessage());
+            LOGGER.error("getUserDetailsFromMobileNumber(): Exception occured while saving the new user location, Exception: %s", ex.getMessage());
             return new ResponseEntity<>(new UserDetails(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("userActions/getAllUserLocations")
+    public ResponseEntity<List<UserLocation>> getAllUserLocations(@RequestParam String authToken, @RequestParam String userId) {
+        List<UserLocation> userLocations;
+        try {
+            LOGGER.info("getAllUserLocations(): Request received to get the all the user locations from userId: {} and auth-Token: {}", userId, authToken);
+            userLocations = userActionsService.getAllUserLocations(authToken, userId);
+            return new ResponseEntity<>(userLocations, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("getAllUserLocations(): Exception occured while getting all the user location, Exception: %s", ex.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
         }
     }
 

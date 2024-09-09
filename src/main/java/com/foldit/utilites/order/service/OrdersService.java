@@ -92,7 +92,7 @@ public class OrdersService {
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            // LOGGER.error("saveNewUserLocation(): Exception occured while saving the orderDetails: {} details to monogoDb, Exception: %s", toJson(orderDetails), ex.getMessage());
+            LOGGER.error("getUserOrderHistoryFromUserId(): Exception occurred getting the user oder history from useId: {}, Exception: %s", userId, ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }

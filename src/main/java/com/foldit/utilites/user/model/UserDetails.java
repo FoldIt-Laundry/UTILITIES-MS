@@ -11,6 +11,14 @@ public class UserDetails {
     private String name;
     private String mobileNumber;
     private List<UserLocation> locations;
+
+    public UserDetails() {
+    }
+
+    public UserDetails(List<UserLocation> locations) {
+        this.locations = locations;
+    }
+
     public String getId() {
         return id;
     }

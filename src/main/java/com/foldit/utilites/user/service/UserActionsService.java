@@ -17,6 +17,10 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class UserActionsService {
 
@@ -58,6 +62,22 @@ public class UserActionsService {
                 throw new AuthTokenValidationException(null);
             }
             return iUserDetails.findById(userId).orElseGet(() -> (new UserDetails()));
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex){
+            LOGGER.error("saveNewUserLocation(): Exception occured while getting the user details from monogoDb, Exception: %s", ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserLocation> getAllUserLocations(String authToken, String userId) {
+        try {
+            if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
+                LOGGER.error("Auth token: {}, Validation failed", authToken);
+                throw new AuthTokenValidationException(null);
+            }
+            return Optional.ofNullable(iUserDetails.getAllUserLocationFromUserId(userId)).orElseGet(() -> new UserDetails(new ArrayList<>())).getLocations();
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex){
