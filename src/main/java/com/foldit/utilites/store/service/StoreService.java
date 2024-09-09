@@ -3,9 +3,9 @@ package com.foldit.utilites.store.service;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.store.dao.IStoreDetails;
-import com.foldit.utilites.store.model.NearestStoreAvailableRequest;
-import com.foldit.utilites.store.model.NearestStoreAvailableRespone;
-import com.foldit.utilites.store.model.StoreDetails;
+import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
+import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
+import com.foldit.utilites.store.model.*;
 import com.foldit.utilites.tokenverification.service.TokenVerificationService;
 import com.foldit.utilites.user.control.UserActionsController;
 import com.mongodb.client.model.geojson.Position;
@@ -30,14 +30,17 @@ public class StoreService {
 
     private static final Logger LOGGER =  LoggerFactory.getLogger(StoreService.class);
 
+    public StoreService(@Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup) {
+        this.iGetTimeSlotsForScheduledPickUp = slotsGeneratorForScheduledPickup;
+    }
+
     @Autowired
     private TokenVerificationService tokenVerificationService;
-
     @Autowired
     private MongoTemplate mongoTemplate;
-
     @Autowired
     private IStoreDetails iStoreDetails;
+    private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
 
     public NearestStoreAvailableRespone getNearestAvailableStoreDetails(NearestStoreAvailableRequest nearestStoreAvailableRequest,String authToken) {
         NearestStoreAvailableRespone nearestStoreAvailableRespone = new NearestStoreAvailableRespone();
@@ -60,6 +63,20 @@ public class StoreService {
             LOGGER.error("getNearestAvailableStoreDetails(): Exception occured while getting the nearest store details: {} , Exception: %s", toJson(nearestStoreAvailableRequest), ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
+    }
+
+    public AvailableTimeSlotsForScheduledPickupResponse getTimeSlotsForScheduledPickup(AvailableTimeSlotsForScheduledPickupRequest availableTimeSlotsRequest, String authToken) {
+        AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
+        try {
+            validateAuthToken(availableTimeSlotsRequest.getUserId(), authToken);
+            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getTimeSlotsForScheduledPickUp(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getTimeSlotsForScheduledPickup(): Exception occured while getting time slots for request: {} , Exception: %s", toJson(availableTimeSlotsRequest), ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+        return timeSlotsResponse;
     }
 
     private boolean validateAuthToken(String userId, String authToken) {

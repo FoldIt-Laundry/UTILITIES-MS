@@ -24,7 +24,7 @@ public class OrdersController {
     @Autowired
     private OrdersService ordersService;
 
-    @GetMapping("order/getOrderDetailsByOrderId")
+    @PostMapping("order/getOrderDetailsByOrderId")
     public ResponseEntity<OrderDetails> getOrderDetailsFromOrderId(@RequestHeader(value="authToken") String authToken, @RequestBody GetOrderDetailsFromOrderIdReq orderDetailsFromOrderIdReq) {
         OrderDetails orderDetails;
         try {
