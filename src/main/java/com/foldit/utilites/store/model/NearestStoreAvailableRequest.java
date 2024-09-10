@@ -7,6 +7,15 @@ public class NearestStoreAvailableRequest {
     private double latitude;
     private double longitude;
     private String userId;
+    private String mobileNumber;
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
 
     public String getUserId() {
         return userId;

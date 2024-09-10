@@ -19,11 +19,19 @@ public class OrderDetails {
     private String orderDeliveryTimeStamp;
     private String orderOrderedTimeStamp;
     private CostStructure billDetails;
-
+    private ScheduledTime scheduledTimings;
     private Double rating;
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp = generate4DigitOtpCode();
     private String checkInOtp = generate4DigitOtpCode();
+
+    public ScheduledTime getScheduledTimings() {
+        return scheduledTimings;
+    }
+
+    public void setScheduledTimings(ScheduledTime scheduledTimings) {
+        this.scheduledTimings = scheduledTimings;
+    }
 
     public String getCheckInOtp() {
         return checkInOtp;

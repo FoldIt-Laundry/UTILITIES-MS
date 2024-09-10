@@ -4,6 +4,8 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.store.dao.IStoreDetails;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
+import com.foldit.utilites.store.interfaces.TokenValidation;
+import com.foldit.utilites.store.interfacesimp.RedisAuthTokenValidation;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.store.model.*;
 import com.foldit.utilites.tokenverification.service.TokenVerificationService;
@@ -30,22 +32,22 @@ public class StoreService {
 
     private static final Logger LOGGER =  LoggerFactory.getLogger(StoreService.class);
 
-    public StoreService(@Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup) {
+    public StoreService(@Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup, @Autowired RedisAuthTokenValidation redisAuthTokenValidation) {
         this.iGetTimeSlotsForScheduledPickUp = slotsGeneratorForScheduledPickup;
+        this.tokenValidation = redisAuthTokenValidation;
     }
 
-    @Autowired
-    private TokenVerificationService tokenVerificationService;
     @Autowired
     private MongoTemplate mongoTemplate;
     @Autowired
     private IStoreDetails iStoreDetails;
     private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
+    private TokenValidation tokenValidation;
 
     public NearestStoreAvailableRespone getNearestAvailableStoreDetails(NearestStoreAvailableRequest nearestStoreAvailableRequest,String authToken) {
         NearestStoreAvailableRespone nearestStoreAvailableRespone = new NearestStoreAvailableRespone();
         try {
-            validateAuthToken(nearestStoreAvailableRequest.getUserId(), authToken);
+            tokenValidation.authTokenValidation(authToken, nearestStoreAvailableRequest.getUserId(), nearestStoreAvailableRequest.getMobileNumber());
             Point location = new Point(nearestStoreAvailableRequest.getLatitude(), nearestStoreAvailableRequest.getLongitude());
             Query query = new Query();
             query.addCriteria(Criteria.where("storeLocation.location")
@@ -68,7 +70,7 @@ public class StoreService {
     public AvailableTimeSlotsForScheduledPickupResponse getTimeSlotsForScheduledPickup(AvailableTimeSlotsForScheduledPickupRequest availableTimeSlotsRequest, String authToken) {
         AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
         try {
-            validateAuthToken(availableTimeSlotsRequest.getUserId(), authToken);
+            tokenValidation.authTokenValidation(authToken, availableTimeSlotsRequest.getUserId(), availableTimeSlotsRequest.getMobileNumber());
             timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getTimeSlotsForScheduledPickUp(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
@@ -79,13 +81,7 @@ public class StoreService {
         return timeSlotsResponse;
     }
 
-    private boolean validateAuthToken(String userId, String authToken) {
-        if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
-            LOGGER.error("Auth token: {}, Validation failed", authToken);
-            throw new AuthTokenValidationException(null);
-        }
-        return true;
-    }
+
 
 
 

@@ -21,60 +21,55 @@ public class SlotsGeneratorForScheduledPickup implements IGetTimeSlotsForSchedul
 
     @Override
     public Map<String, List<String>> getTimeSlotsForScheduledPickUp(String shopStartTime, String shopEndTime) {
-        Map<String, List<String>> slotsMap = new TreeMap<>();
+        Map<String, List<String>> schedule = new TreeMap<>();
         try {
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-            ZoneId zoneId = ZoneId.of("Asia/Kolkata");
-            LocalTime currentTime = LocalTime.now(zoneId);
-            LocalDate currentDate = LocalDate.now(zoneId);
+            LocalDate currentDate = LocalDate.now();
+            LocalTime currentTime = LocalTime.now().withMinute(0).withSecond(0).withNano(0);
 
-            DateTimeFormatter inputTimeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-            LocalTime openTime = LocalTime.parse(shopStartTime, inputTimeFormatter);
-            LocalTime closeTime = LocalTime.parse(shopEndTime, inputTimeFormatter);
 
-            boolean crossesMidnight = closeTime.isBefore(openTime);
-
-            LocalDateTime startDateTime;
-            LocalDateTime endDateTime;
-
-            if (crossesMidnight) {
-                if (currentTime.isBefore(closeTime)) {
-                    startDateTime = LocalDateTime.of(currentDate.minusDays(1), openTime);
-                    endDateTime = LocalDateTime.of(currentDate, closeTime);
-                } else {
-                    startDateTime = LocalDateTime.of(currentDate, openTime);
-                    endDateTime = LocalDateTime.of(currentDate.plusDays(1), closeTime);
-                }
-            } else {
-                startDateTime = LocalDateTime.of(currentDate, openTime);
-                endDateTime = LocalDateTime.of(currentDate, closeTime);
-                if (currentTime.isAfter(closeTime)) {
-                    startDateTime = startDateTime.plusDays(1);
-                    endDateTime = endDateTime.plusDays(1);
-                }
+            if (LocalTime.now().getMinute() > 0) {
+                currentTime = currentTime.plusHours(1);
             }
 
-            if (startDateTime.toLocalTime().isBefore(currentTime)) {
-                startDateTime = LocalDateTime.of(currentDate, currentTime.plusMinutes(60 - currentTime.getMinute()));
-            }
 
-            for (int i = 0; i < 20; i++) {
-                if (startDateTime.toLocalTime().isAfter(closeTime) && !crossesMidnight) {
-                    startDateTime = startDateTime.plusDays(1).withHour(openTime.getHour()).withMinute(0);
-                    endDateTime = endDateTime.plusDays(1).withHour(closeTime.getHour());
+            LocalTime openingTime = LocalTime.parse(shopStartTime, DateTimeFormatter.ofPattern("HH:mm")).withMinute(0).withSecond(0).withNano(0);
+            LocalTime closingTime = LocalTime.parse(shopEndTime, DateTimeFormatter.ofPattern("HH:mm")).withMinute(0).withSecond(0).withNano(0);
+
+
+            int slotCount = 0;
+            LocalDate date = currentDate;
+            LocalTime slotStart = openingTime;
+
+
+            while (slotCount < 20) {
+
+                String dateStr = date.format(dateFormatter);
+                List<String> slots = schedule.getOrDefault(dateStr, new ArrayList<>());
+
+
+                while (!slotStart.isAfter(closingTime.minusHours(1)) && slotCount < 20) {
+
+                    if (date.isAfter(currentDate) || (date.equals(currentDate) && slotStart.isAfter(currentTime))) {
+                        slots.add(slotStart.format(timeFormatter) + " - " + slotStart.plusHours(1).format(timeFormatter));
+                        slotCount++;
+                    }
+                    slotStart = slotStart.plusHours(1);
                 }
 
-                String dateKey = startDateTime.toLocalDate().format(dateFormatter);
 
-                String slot = startDateTime.toLocalTime().format(timeFormatter) + " - "
-                        + startDateTime.plusHours(1).toLocalTime().format(timeFormatter);
+                if (!slots.isEmpty()) {
+                    schedule.put(dateStr, slots);
+                }
 
-                slotsMap.computeIfAbsent(dateKey, k -> new ArrayList<>()).add(slot);
 
-                startDateTime = startDateTime.plusHours(1);
+                date = date.plusDays(1);
+                slotStart = openingTime;
             }
 
-            return slotsMap;
+            return schedule;
         } catch (Exception ex) {
             LOGGER.error("getTimeSlotsForScheduledPickUp(): Exception occurred while getting the time slots for the scheduled pickup, Exception: %s", ex.getMessage());
         }

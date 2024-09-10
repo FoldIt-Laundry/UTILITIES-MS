@@ -15,9 +15,10 @@ public class TokenVerificationService {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    public boolean validateAuthToken(String userId,String authToken) {
+    public boolean validateAuthToken(String userIdVerificationKey,String authToken) {
         try {
-            String keyForAuthToken = userId+"AuthToken";
+            LOGGER.info("validateAuthToken(): Initiating request to validate the userIdVerificationKey: {} and authToken: {}", userIdVerificationKey, authToken);
+            String keyForAuthToken = userIdVerificationKey+"AuthToken";
             String storedAuthToken = (String) redisTemplate.opsForValue().get(keyForAuthToken);
             if (storedAuthToken != null && storedAuthToken.equalsIgnoreCase(authToken)) {
                 return true;

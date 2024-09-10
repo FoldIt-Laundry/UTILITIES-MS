@@ -2,8 +2,17 @@ package com.foldit.utilites.store.model;
 
 public class AvailableTimeSlotsForScheduledPickupRequest {
     private String userId;
+    private String mobileNumber;
     private String shopOpeningTime;
     private String shopClosingTime;
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
 
     public String getUserId() {
         return userId;
