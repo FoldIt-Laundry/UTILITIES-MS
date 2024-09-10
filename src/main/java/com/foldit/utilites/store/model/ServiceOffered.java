@@ -10,6 +10,15 @@ public class ServiceOffered {
     private String description;
     private double pricing;
     private double serviceTime;
+    private String longDescription;
+
+    public String getLongDescription() {
+        return longDescription;
+    }
+
+    public void setLongDescription(String longDescription) {
+        this.longDescription = longDescription;
+    }
 
     public String getType() {
         return type;
