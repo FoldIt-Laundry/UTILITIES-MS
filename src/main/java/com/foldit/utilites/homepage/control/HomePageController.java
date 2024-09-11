@@ -36,5 +36,10 @@ public class HomePageController {
         }
     }
 
+    @GetMapping("/test")
+    public String get(){
+        return "Application up and running";
+    }
+
 
 }
