@@ -28,7 +28,20 @@ public class TokenValidationService implements TokenValidation {
             LOGGER.error("Auth token: {}, Validation failed", authToken);
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            LOGGER.error("authTokenValidation(): Exception occurred while validating the auth token: {}", authToken);
+            LOGGER.error("authTokenValidation(): Exception occurred while validating the auth token: {} from either userId: {} or mobileNumber: {}", authToken, userId, mobileNumber);
+            throw new AuthTokenValidationException(null);
+        }
+    }
+
+    @Override
+    public boolean authTokenValidationFromUserId(String authToken, String userId) {
+        try {
+            if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+                throw new AuthTokenValidationException(null);
+            }
+            return true;
+        } catch (Exception ex) {
+            LOGGER.error("authTokenValidationFromUserId(): Exception occurred while validating the auth token: {} from userId: {}", authToken, userId);
             throw new AuthTokenValidationException(null);
         }
     }

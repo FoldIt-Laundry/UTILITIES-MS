@@ -30,7 +30,7 @@ public class UserActionsController {
     private UserActionsService userActionsService;
 
     @PatchMapping("userActions/saveNewLocation")
-    public ResponseEntity<OnBoardNewUserLocation> saveNewUserLocation(@RequestBody OnBoardNewUserLocation userLocation, @RequestParam String authToken) {
+    public ResponseEntity<OnBoardNewUserLocation> saveNewUserLocation(@RequestBody OnBoardNewUserLocation userLocation, @RequestHeader(value = "authToken") String authToken) {
         OnBoardNewUserLocation onBoardingNewUserLocation;
         try{
             LOGGER.info("saveNewUserLocation(): Request received to store the new user location: {} and auth-Token: {}", toJson(userLocation), authToken);
@@ -45,7 +45,7 @@ public class UserActionsController {
     }
 
     @GetMapping("userActions/getUserDetailsFromUserId")
-    public ResponseEntity<UserDetails> getUserDetailsFromMobileNumber(@RequestParam String authToken, @RequestParam String userId) {
+    public ResponseEntity<UserDetails> getUserDetailsFromMobileNumber(@RequestHeader(value = "authToken") String authToken, @RequestParam String userId) {
         UserDetails userDetailsFromDb;
         try {
             LOGGER.info("getUserDetailsFromMobileNumber(): Request received to get the user details from userId: {} and auth-Token: {}", userId, authToken);
@@ -60,7 +60,7 @@ public class UserActionsController {
     }
 
     @GetMapping("userActions/getAllUserLocations")
-    public ResponseEntity<List<UserLocation>> getAllUserLocations(@RequestParam String authToken, @RequestParam String userId) {
+    public ResponseEntity<List<UserLocation>> getAllUserLocations(@RequestHeader(value = "authToken") String authToken, @RequestParam String userId) {
         List<UserLocation> userLocations;
         try {
             LOGGER.info("getAllUserLocations(): Request received to get the all the user locations from userId: {} and auth-Token: {}", userId, authToken);
