@@ -1,19 +1,19 @@
 package com.foldit.utilites.store.dto;
 
-import com.foldit.utilites.store.model.NearestStoreAvailableRespone;
+import com.foldit.utilites.store.model.AvailableStoreDetailsRespone;
 import com.foldit.utilites.store.model.StoreDetails;
 
 public class StoreDetailsConverter {
 
-    public static NearestStoreAvailableRespone getNearestStoreFromStoreDetails(StoreDetails storeDetails) {
-        NearestStoreAvailableRespone nearestStoreAvailableRespone = new NearestStoreAvailableRespone();
-        nearestStoreAvailableRespone.setStoreId(storeDetails.getId());
-        nearestStoreAvailableRespone.setShopAddress(storeDetails.getStoreLocation().getAddressLine1());
-        nearestStoreAvailableRespone.setShopName(storeDetails.getName());
-        nearestStoreAvailableRespone.setOperatingHourEndTime(storeDetails.getOperatingHourEndTime());
-        nearestStoreAvailableRespone.setOperatingHourStartTime(storeDetails.getOperatingHourStartTime());
-        nearestStoreAvailableRespone.setServiceOffered(storeDetails.getServiceOffered());
-        return nearestStoreAvailableRespone;
+    public static AvailableStoreDetailsRespone getNearestStoreFromStoreDetails(StoreDetails storeDetails) {
+        AvailableStoreDetailsRespone availableStoreDetailsRespone = new AvailableStoreDetailsRespone();
+        availableStoreDetailsRespone.setStoreId(storeDetails.getId());
+        availableStoreDetailsRespone.setShopAddress(storeDetails.getStoreLocation().getAddressLine1());
+        availableStoreDetailsRespone.setShopName(storeDetails.getName());
+        availableStoreDetailsRespone.setOperatingHourEndTime(storeDetails.getOperatingHourEndTime());
+        availableStoreDetailsRespone.setOperatingHourStartTime(storeDetails.getOperatingHourStartTime());
+        availableStoreDetailsRespone.setServiceOffered(storeDetails.getServiceOffered());
+        return availableStoreDetailsRespone;
     }
 
 }

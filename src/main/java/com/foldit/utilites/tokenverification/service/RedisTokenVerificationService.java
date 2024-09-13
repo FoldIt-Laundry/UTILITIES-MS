@@ -1,6 +1,5 @@
 package com.foldit.utilites.tokenverification.service;
 
-import com.foldit.utilites.homepage.control.HomePageController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,9 +7,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TokenVerificationService {
+public class RedisTokenVerificationService {
 
-    private static final Logger LOGGER =  LoggerFactory.getLogger(TokenVerificationService.class);
+    private static final Logger LOGGER =  LoggerFactory.getLogger(RedisTokenVerificationService.class);
 
     @Autowired
     private RedisTemplate redisTemplate;

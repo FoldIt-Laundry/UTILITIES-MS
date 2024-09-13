@@ -1,20 +1,18 @@
 package com.foldit.utilites.store.model;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
 
-public class NearestStoreAvailableRespone {
+public class AvailableStoreDetailsRespone {
     private String storeId;
     private String shopName;
     private String shopAddress;
     private String operatingHourStartTime;
     private String operatingHourEndTime;
+
     private List<ServiceOffered> serviceOffered;
 
-    public NearestStoreAvailableRespone() {
+    public AvailableStoreDetailsRespone() {
     }
 
     public List<ServiceOffered> getServiceOffered() {

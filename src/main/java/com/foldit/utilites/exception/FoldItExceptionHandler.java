@@ -42,4 +42,11 @@ public class FoldItExceptionHandler {
         return map_;
     }
 
+    @ExceptionHandler(value = GoogleApiException.class)
+    public Map<String,String> throwGoogleApiException(GoogleApiException googleApiException) {
+        Map<String,String> map_ = new HashMap<>();
+        map_.put("errorMessage", String.format("Failed to get the distance data from the google api, Exception: %s", googleApiException.getMessage()));
+        return map_;
+    }
+
 }

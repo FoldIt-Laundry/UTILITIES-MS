@@ -1,4 +1,4 @@
-package com.foldit.utilites.user.dao;
+package com.foldit.utilites.dao;
 
 
 import com.foldit.utilites.user.model.UserDetails;

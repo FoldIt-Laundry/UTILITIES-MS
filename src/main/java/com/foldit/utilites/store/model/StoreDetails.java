@@ -13,6 +13,8 @@ public class StoreDetails {
     private List<String> phoneNumber;
     private String email;
     private Double averageEtd;
+    private Double deliveryFeePerKmAfterThreshold;
+    private Double freeDeliveryDistanceAllowed;
     private Double rating;
     private List<RatingAndComment> ratingCommentList;
     private String description;
@@ -22,6 +24,22 @@ public class StoreDetails {
     private List<ServiceOffered> serviceOffered;
     private List<String> shopAdminIds = new ArrayList<>();
     private List<String> shopWorkerIds = new ArrayList<>();
+
+    public Double getDeliveryFeePerKmAfterThreshold() {
+        return deliveryFeePerKmAfterThreshold;
+    }
+
+    public void setDeliveryFeePerKmAfterThreshold(Double deliveryFeePerKmAfterThreshold) {
+        this.deliveryFeePerKmAfterThreshold = deliveryFeePerKmAfterThreshold;
+    }
+
+    public Double getFreeDeliveryDistanceAllowed() {
+        return freeDeliveryDistanceAllowed;
+    }
+
+    public void setFreeDeliveryDistanceAllowed(Double freeDeliveryDistanceAllowed) {
+        this.freeDeliveryDistanceAllowed = freeDeliveryDistanceAllowed;
+    }
 
     public List<String> getShopAdminIds() {
         return shopAdminIds;

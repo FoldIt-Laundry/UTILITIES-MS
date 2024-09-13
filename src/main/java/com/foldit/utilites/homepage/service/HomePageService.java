@@ -1,12 +1,10 @@
 package com.foldit.utilites.homepage.service;
 
+import com.foldit.utilites.dao.IServiceOffered;
 import com.foldit.utilites.exception.MongoDBReadException;
-import com.foldit.utilites.homepage.control.HomePageController;
-import com.foldit.utilites.homepage.dao.IServiceOffered;
 import com.foldit.utilites.homepage.model.ServiceAvailable;
 import com.foldit.utilites.homepage.model.Services;
-import com.foldit.utilites.tokenverification.service.TokenVerificationService;
-import org.apache.commons.lang3.StringUtils;
+import com.foldit.utilites.tokenverification.service.TokenValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,29 +15,29 @@ import java.util.List;
 @Service
 public class HomePageService {
 
-    private static final Logger LOGGER =  LoggerFactory.getLogger(HomePageService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HomePageService.class);
     @Autowired
     private IServiceOffered iServiceOffered;
-
     @Autowired
-    private TokenVerificationService tokenVerificationService;
+    private TokenValidationService tokenValidationService;
 
-    public ServiceAvailable getAllAvailableService(String authToken,String userId, String mobileNumber) {
+    public ServiceAvailable getAllAvailableService(String authToken, String userId, String mobileNumber) {
         List<Services> servicesList;
         try {
-            if(StringUtils.isNotBlank(mobileNumber) ) {
-                if(!tokenVerificationService.validateAuthTokenFromMobileNumber(mobileNumber, authToken)) return new ServiceAvailable();
-            }
-            else if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
-                return new ServiceAvailable();
-            }
+            tokenValidationService.authTokenValidationFromUserOrMobile(authToken, userId, mobileNumber);
             servicesList = iServiceOffered.findAll();
+
+            double lat1 = 12.9210488; // Source latitude
+            double lon1 = 77.6781733; // Source longitude
+            double lat2 = 13.0621163; // Destination latitude
+            double lon2 = 77.6604752;  // Destination longitude
+
+
             return new ServiceAvailable(true, servicesList);
         } catch (Exception ex) {
             LOGGER.error("getAllAvailableService(): Error while fetching the service details from mongodb db, Exception: {}", ex.getMessage());
             throw new MongoDBReadException(String.format("Failed to get data from mongoDb for getAllAvailableService() flow, Exception: %s", ex.getMessage()));
         }
     }
-
 
 }

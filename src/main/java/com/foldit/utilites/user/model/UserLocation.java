@@ -8,42 +8,17 @@ import java.util.List;
 
 @Document(collection = "UserDetails")
 public class UserLocation {
+
     @Id
     private String id = String.valueOf(ObjectId.get());
-    private String addressLine1;
-    private String addressLine2;
-    private String city;
-    private String state;
-    private String postalCode;
-    private String country;
-    private List<Double> coordinates;
-    private String locationType;
-    private String othersLocationName;
-    private String completeAddress;
-
-    public String getCompleteAddress() {
-        return completeAddress;
-    }
-
-    public void setCompleteAddress(String completeAddress) {
-        this.completeAddress = completeAddress;
-    }
-
-    public String getOthersLocationName() {
-        return othersLocationName;
-    }
-
-    public void setOthersLocationName(String othersLocationName) {
-        this.othersLocationName = othersLocationName;
-    }
-
-    public String getLocationType() {
-        return locationType;
-    }
-
-    public void setLocationType(String locationType) {
-        this.locationType = locationType;
-    }
+    private String flatNumber;
+    private String landMark;
+    private String googleSuggestedAddress;
+    private Double latitude;
+    private Double longitude;
+    private String addressType;
+    private Double distanceFromNearestStore;
+    private Double deliveryFeeIfApplicable;
 
     public String getId() {
         return id;
@@ -53,59 +28,67 @@ public class UserLocation {
         this.id = id;
     }
 
-    public String getAddressLine1() {
-        return addressLine1;
+    public String getFlatNumber() {
+        return flatNumber;
     }
 
-    public void setAddressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
+    public void setFlatNumber(String flatNumber) {
+        this.flatNumber = flatNumber;
     }
 
-    public String getAddressLine2() {
-        return addressLine2;
+    public String getLandMark() {
+        return landMark;
     }
 
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
+    public void setLandMark(String landMark) {
+        this.landMark = landMark;
     }
 
-    public String getCity() {
-        return city;
+    public String getGoogleSuggestedAddress() {
+        return googleSuggestedAddress;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setGoogleSuggestedAddress(String googleSuggestedAddress) {
+        this.googleSuggestedAddress = googleSuggestedAddress;
     }
 
-    public String getState() {
-        return state;
+    public Double getLatitude() {
+        return latitude;
     }
 
-    public void setState(String state) {
-        this.state = state;
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
     }
 
-    public String getPostalCode() {
-        return postalCode;
+    public Double getLongitude() {
+        return longitude;
     }
 
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
-    public String getCountry() {
-        return country;
+    public String getAddressType() {
+        return addressType;
     }
 
-    public void setCountry(String country) {
-        this.country = country;
+    public void setAddressType(String addressType) {
+        this.addressType = addressType;
     }
 
-    public List<Double> getCoordinates() {
-        return coordinates;
+    public Double getDistanceFromNearestStore() {
+        return distanceFromNearestStore;
     }
 
-    public void setCoordinates(List<Double> coordinates) {
-        this.coordinates = coordinates;
+    public void setDistanceFromNearestStore(Double distanceFromNearestStore) {
+        this.distanceFromNearestStore = distanceFromNearestStore;
+    }
+
+    public Double getDeliveryFeeIfApplicable() {
+        return deliveryFeeIfApplicable;
+    }
+
+    public void setDeliveryFeeIfApplicable(Double deliveryFeeIfApplicable) {
+        this.deliveryFeeIfApplicable = deliveryFeeIfApplicable;
     }
 }

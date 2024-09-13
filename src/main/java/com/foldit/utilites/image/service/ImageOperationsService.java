@@ -1,6 +1,6 @@
 package com.foldit.utilites.image.service;
 
-import com.foldit.utilites.image.dao.IImage;
+import com.foldit.utilites.dao.IImage;
 import com.foldit.utilites.image.model.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,10 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 @Service

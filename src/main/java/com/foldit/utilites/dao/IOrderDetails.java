@@ -1,4 +1,4 @@
-package com.foldit.utilites.order.dao;
+package com.foldit.utilites.dao;
 
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.OrderDetails;

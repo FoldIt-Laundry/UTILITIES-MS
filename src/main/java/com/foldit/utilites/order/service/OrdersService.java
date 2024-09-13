@@ -2,11 +2,11 @@ package com.foldit.utilites.order.service;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
-import com.foldit.utilites.order.dao.IOrderDetails;
+import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.tokenverification.service.TokenVerificationService;
+import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ public class OrdersService {
     private static final Logger LOGGER =  LoggerFactory.getLogger(OrdersService.class);
 
     @Autowired
-    private TokenVerificationService tokenVerificationService;
+    private RedisTokenVerificationService redisTokenVerificationService;
 
     @Autowired
     private IOrderDetails iOrderDetails;
@@ -98,7 +98,7 @@ public class OrdersService {
     }
 
     private boolean validateAuthToken(String userId, String authToken) {
-        if(!tokenVerificationService.validateAuthToken(userId, authToken)) {
+        if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
             LOGGER.error("Auth token: {}, Validation failed", authToken);
             throw new AuthTokenValidationException(null);
         }

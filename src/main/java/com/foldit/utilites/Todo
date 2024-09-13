@@ -5,9 +5,9 @@
 
 1) GET SERVICES AVAILABLE TO BE DISCUSSED IN DETAILS
 
-- GEO LOCATION SEARH IS NOT WOKRING
-- Long description field to be added
--
+- GEO LOCATION SEARH IS NOT WORKING
+- fcmApi ( fcmToken, UserId, MobileNumber ) :  fcmToken MongoDB
+- Delete the user credentials /logout api
 
 Status
 
