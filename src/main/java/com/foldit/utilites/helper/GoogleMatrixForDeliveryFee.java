@@ -49,7 +49,7 @@ public class GoogleMatrixForDeliveryFee {
         Double distance = null;
         String url = String.format(
                 "https://maps.googleapis.com/maps/api/distancematrix/json?origins=%s&destinations=%s&key=%s",
-                source, destination, ""
+                source, destination, deliveryFeeCalculatorRequest.getGoogleApiKey()
         );
         ResponseEntity<Object> response = restTemplate.getForEntity(url, Object.class);
         LOGGER.info("calculateDistance(): Response received from google api matrix is: {}", toJson(response.getBody()));

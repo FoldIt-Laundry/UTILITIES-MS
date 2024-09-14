@@ -4,6 +4,7 @@ import com.foldit.utilites.dao.IStoreDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.GoogleApiException;
 import com.foldit.utilites.exception.MongoDBReadException;
+import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.store.model.*;
@@ -39,6 +40,8 @@ public class StoreService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private IStoreDetails iStoreDetails;
+    @Autowired
+    private NegotiationConfigHolder negotiationConfigHolder;
     private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
     private TokenValidation tokenValidation;
 
@@ -109,7 +112,8 @@ public class StoreService {
     public Double deliveryFeeCalculator(String authToken, DeliveryFeeCalculatorRequest deliveryFeeCalculatorRequest) {
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, deliveryFeeCalculatorRequest.getUserId(), deliveryFeeCalculatorRequest.getMobileNumber());
-            StoreDetails storeDetails = iStoreDetails.getShopTimingsFromStoreId("66dcbe4b2f87e5390bc4177e");
+            StoreDetails storeDetails = iStoreDetails.getShopDeliveryFeeRelatedInformation("66dcbe4b2f87e5390bc4177e");
+            deliveryFeeCalculatorRequest.setGoogleApiKey(negotiationConfigHolder.getGoogleApiKeyForDistanceMatrix());
             return calculateDeliveryFee(deliveryFeeCalculatorRequest, storeDetails.getDeliveryFeePerKmAfterThreshold(), storeDetails.getFreeDeliveryDistanceAllowed());
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

@@ -1,24 +1,16 @@
-1) From ui we need user location file + one string with final user string
-2) Same for store we need a final string for it
 
 
-
-1) GET SERVICES AVAILABLE TO BE DISCUSSED IN DETAILS
-
-- GEO LOCATION SEARH IS NOT WORKING
-- fcmApi ( fcmToken, UserId, MobileNumber ) :  fcmToken MongoDB
-
+Location user update new format everywhere
+New flow pe start working
 
 
 Status
 
+
+
 - ORDER
 
-
-
 -- Woker
-
-
 
 -- Delivery
 

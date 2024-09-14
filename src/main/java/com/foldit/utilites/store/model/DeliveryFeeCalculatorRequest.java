@@ -7,6 +7,15 @@ public class DeliveryFeeCalculatorRequest {
     private String sourceLongitude;
     private String destinationLatitude;
     private String destinationLongitude;
+    private String googleApiKey;
+
+    public String getGoogleApiKey() {
+        return googleApiKey;
+    }
+
+    public void setGoogleApiKey(String googleApiKey) {
+        this.googleApiKey = googleApiKey;
+    }
 
     public String getUserId() {
         return userId;

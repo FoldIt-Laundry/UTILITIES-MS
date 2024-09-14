@@ -4,6 +4,7 @@ import com.foldit.utilites.dao.IStoreDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.GoogleApiException;
 import com.foldit.utilites.exception.MongoDBReadException;
+import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.store.model.DeliveryFeeCalculatorRequest;
 import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
@@ -41,6 +42,8 @@ public class UserActionsService {
     private IUserDetails iUserDetails;
     @Autowired
     private IStoreDetails iStoreDetails;
+    @Autowired
+    private NegotiationConfigHolder negotiationConfigHolder;
 
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -109,6 +112,7 @@ public class UserActionsService {
             StoreDetails storeDetails = iStoreDetails.getShopDeliveryFeeRelatedInformation("66dcbe4b2f87e5390bc4177e");
             DeliveryFeeCalculatorRequest deliveryFeeCalculatorRequest = new DeliveryFeeCalculatorRequest();
             deliveryFeeCalculatorRequest.setSourceLatitude(String.valueOf((userLocation.getLatitude())));
+            deliveryFeeCalculatorRequest.setGoogleApiKey(negotiationConfigHolder.getGoogleApiKeyForDistanceMatrix());
             deliveryFeeCalculatorRequest.setSourceLongitude(String.valueOf(userLocation.getLongitude()));
             deliveryFeeCalculatorRequest.setDestinationLatitude(String.valueOf(storeDetails.getStoreLocation().getLocation().getCoordinates().get(0)));
             deliveryFeeCalculatorRequest.setDestinationLongitude(String.valueOf(storeDetails.getStoreLocation().getLocation().getCoordinates().get(1)));
