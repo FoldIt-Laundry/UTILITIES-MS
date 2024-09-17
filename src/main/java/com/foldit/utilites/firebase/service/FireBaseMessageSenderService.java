@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import static com.foldit.utilites.helper.JsonPrinter.toJson;
+
 @Service
 public class FireBaseMessageSenderService {
 
@@ -17,7 +19,7 @@ public class FireBaseMessageSenderService {
     @Autowired
     private FirebaseMessaging firebaseMessaging;
 
-    public void sendNotification(NotificationMessageRequest notificationMessageRequest) {
+    public void sendPushNotification(NotificationMessageRequest notificationMessageRequest) {
         try {
             Notification notification = Notification
                     .builder()
@@ -25,19 +27,16 @@ public class FireBaseMessageSenderService {
                     .setBody(notificationMessageRequest.getBody())
                     // .setImage(notificationMessageRequest.getImage())
                     .build();
-
             Message message = Message
                     .builder()
                     .setToken(notificationMessageRequest.getFcmToken())
                     .setNotification(notification)
                     .putAllData(notificationMessageRequest.getData())
                     .build();
-
-            LOGGER.info("");
+            LOGGER.info("sendPushNotification(): Sending push notification with payload: {}", toJson(notificationMessageRequest));
             firebaseMessaging.send(message);
-
         } catch (Exception ex) {
-
+            LOGGER.error("sendPushNotification(): Exception occurred while sending push notifications for payload:{} and Exception: {}, Not throwing exception", toJson(notificationMessageRequest), ex.getMessage());
         }
     }
 

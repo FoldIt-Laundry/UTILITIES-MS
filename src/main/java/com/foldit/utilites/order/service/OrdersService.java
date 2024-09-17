@@ -1,21 +1,32 @@
 package com.foldit.utilites.order.service;
 
+import com.foldit.utilites.dao.IStoreDetails;
+import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.dao.IOrderDetails;
+import com.foldit.utilites.firebase.model.NotificationMessageRequest;
+import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
+import com.foldit.utilites.user.model.UserDetails;
+import io.grpc.netty.shaded.io.netty.util.concurrent.CompleteFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+import static com.foldit.utilites.constant.OrderRelatedConstant.ORDER_UPDATE;
+import static com.foldit.utilites.constant.OrderRelatedConstant.USER_UPDATE_ORDER_PLACED;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
+import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPROVAL;
 
 
 @Service
@@ -25,9 +36,15 @@ public class OrdersService {
 
     @Autowired
     private RedisTokenVerificationService redisTokenVerificationService;
+    @Autowired
+    private FireBaseMessageSenderService fireBaseMessageSenderService;
 
     @Autowired
     private IOrderDetails iOrderDetails;
+    @Autowired
+    private IUserDetails iUserDetails;
+    @Autowired
+    private IStoreDetails iStoreDetails;
 
 
     @Transactional(readOnly = true)
@@ -73,7 +90,23 @@ public class OrdersService {
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
             validateAuthToken(orderDetails.getUserId(), authToken);
-            OrderDetails orderDetailsFromMongo = iOrderDetails.save(orderDetails);
+            orderDetails.setWorkflowStatus(PENDING_WORKER_APPROVAL);
+            CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
+                 OrderDetails orderDetailsFromMongo = iOrderDetails.save(orderDetails);
+                return orderDetailsFromMongo;
+            });
+            CompletableFuture<Void> sendNotificationToUser = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
+                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
+                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
+                return null;
+            });
+            CompletableFuture<Void> sendNotificationToWorker = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
+                UserDetails userDetails = iStoreDetails.getFcmTokenFromUserId(orderDetails.getUserId());
+                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
+                return null;
+            });
+
+
             return orderDetailsFromMongo;
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

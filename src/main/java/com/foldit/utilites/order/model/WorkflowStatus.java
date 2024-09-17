@@ -1,15 +1,15 @@
-package com.foldit.utilites.store.model;
+package com.foldit.utilites.order.model;
 
 public enum WorkflowStatus {
     ORDER_PLACED(1), //U  User -> , Notification to be admin + worker  ( ORDER MESSAGE + ORDER ID  )
     // Worker fetch order ( Unaccepted ) -> Accept -> Backend ( Time and date fill  ) + Order Mark + USer Due date
     // Worker fetch order ( Today's order + Time Wise ) ( Pending orders + sorted by date and time )
-
-    ACCEPTED(2),  //U  Worker MArk + Assigned to delivery boy
+    PENDING_WORKER_APPROVAL(2),
+    ACCEPTED(3),  //U  Worker MArk + Assigned to delivery boy
     // Rider ko text message pickup ke lie +Order status
     // Same otp everytime for pickup and drop
 
-    PICKED_UP(3), // U, Rider <-> OtpVerification
+    PICKED_UP(4), // U, Rider <-> OtpVerification
     // service and price final
     // Api for final price calculation
 
@@ -19,7 +19,7 @@ public enum WorkflowStatus {
 
     // Payment Razorpay ??????????????????
 
-    IN_STORE(4), // Worker mark order received
+    IN_STORE(5), // Worker mark order received
     // Rider update krdega order
     //
 

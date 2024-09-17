@@ -16,4 +16,10 @@ public interface IUserDetails extends MongoRepository<UserDetails, String> {
     })
     UserDetails getAllUserLocationFromUserId(String userId);
 
+    @Aggregation({
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'locations': 1 , '_id': 0 }}"
+    })
+    UserDetails getFcmTokenFromUserId(String userId);
+
 }

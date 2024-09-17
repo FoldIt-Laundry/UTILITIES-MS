@@ -10,9 +10,18 @@ public class UserDetails {
     private String id;
     private String name;
     private String mobileNumber;
+    private String fcmToken;
     private List<UserLocation> locations;
 
     public UserDetails() {
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 
     public UserDetails(List<UserLocation> locations) {

@@ -9,6 +9,12 @@ public class NotificationMessageRequest {
     private String image;
     private Map<String,String> data;
 
+    public NotificationMessageRequest(String fcmToken, String title, String body) {
+        this.fcmToken = fcmToken;
+        this.title = title;
+        this.body = body;
+    }
+
     public String getFcmToken() {
         return fcmToken;
     }

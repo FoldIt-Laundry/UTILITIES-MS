@@ -14,7 +14,7 @@ public class OrderDetails {
     private OrderAddressDetails userAddress;
     private OrderAddressDetails shopAddress;
     private List<Services> addedService;
-    private String workflowStatus;
+    private WorkflowStatus workflowStatus;
     private List<WorkflowTransitionDetails> auditForWorkflowChanges;
     private String orderDeliveryTimeStamp;
     private String orderOrderedTimeStamp;
@@ -105,11 +105,11 @@ public class OrderDetails {
         this.addedService = addedService;
     }
 
-    public String getWorkflowStatus() {
+    public WorkflowStatus getWorkflowStatus() {
         return workflowStatus;
     }
 
-    public void setWorkflowStatus(String workflowStatus) {
+    public void setWorkflowStatus(WorkflowStatus workflowStatus) {
         this.workflowStatus = workflowStatus;
     }
 
