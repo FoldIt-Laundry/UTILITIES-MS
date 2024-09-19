@@ -7,9 +7,11 @@ import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
+import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
+import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
 import com.foldit.utilites.user.model.UserDetails;
 import io.grpc.netty.shaded.io.netty.util.concurrent.CompleteFuture;
@@ -20,12 +22,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static com.foldit.utilites.constant.OrderRelatedConstant.ORDER_UPDATE;
-import static com.foldit.utilites.constant.OrderRelatedConstant.USER_UPDATE_ORDER_PLACED;
+import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
+import static com.foldit.utilites.order.model.WorkflowStatus.ORDER_PLACED;
 import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPROVAL;
 
 
@@ -38,7 +41,8 @@ public class OrdersService {
     private RedisTokenVerificationService redisTokenVerificationService;
     @Autowired
     private FireBaseMessageSenderService fireBaseMessageSenderService;
-
+    @Autowired
+    private NegotiationConfigHolder negotiationConfigHolder;
     @Autowired
     private IOrderDetails iOrderDetails;
     @Autowired
@@ -90,24 +94,45 @@ public class OrdersService {
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
             validateAuthToken(orderDetails.getUserId(), authToken);
-            orderDetails.setWorkflowStatus(PENDING_WORKER_APPROVAL);
-            CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
-                 OrderDetails orderDetailsFromMongo = iOrderDetails.save(orderDetails);
-                return orderDetailsFromMongo;
-            });
+            orderDetails.setStoreId(negotiationConfigHolder.getDefaultShopId());
+            orderDetails.setUserWorkflowStatus(ORDER_PLACED);
+            orderDetails.setWorkerRiderWorkflowStatus(PENDING_WORKER_APPROVAL);
+
+            // Insert order in db
+            CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> iOrderDetails.save(orderDetails));
+
+            // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
                 return null;
             });
-            CompletableFuture<Void> sendNotificationToWorker = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
-                UserDetails userDetails = iStoreDetails.getFcmTokenFromUserId(orderDetails.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
+
+            // Send notification to worker and admin
+            CompletableFuture<Void> sendNotificationToWorkerAndAdmin = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
+                StoreDetails shopWorkerAdminIds = iStoreDetails.getWorkerAndShopAdminIds(negotiationConfigHolder.getDefaultShopId());
+                List<String> workerUserId = shopWorkerAdminIds.getShopWorkerIds();
+                List<String> adminUserId = shopWorkerAdminIds.getShopAdminIds();
+
+                CompletableFuture<Void> sendNotificationToWorker = CompletableFuture.supplyAsync(() -> {
+                    workerUserId.parallelStream().forEach(userId -> {
+                        UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
+                        fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
+                    });
+                    return null;
+                });
+
+                CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
+                    adminUserId.parallelStream().forEach(userId -> {
+                        UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
+                        fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
+                    });
+                    return null;
+                });
                 return null;
             });
-
-
-            return orderDetailsFromMongo;
+            CompletableFuture.allOf(orderDetailsInsertedInDb);
+            return orderDetailsInsertedInDb.join();
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {

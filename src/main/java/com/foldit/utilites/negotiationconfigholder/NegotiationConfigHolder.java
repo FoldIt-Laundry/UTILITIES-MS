@@ -13,6 +13,7 @@ public class NegotiationConfigHolder {
     private static final Logger LOGGER =  LoggerFactory.getLogger(NegotiationConfigHolder.class);
 
     private String googleApiKeyForDistanceMatrix;
+    private String defaultShopId;
 
     @Autowired
     private IConfigDetails iConfigDetails;
@@ -21,6 +22,7 @@ public class NegotiationConfigHolder {
     @PostConstruct
     public void populateConfigurations() {
         googleApiKeyForDistanceMatrix = populateNegotiationConfig("GOOGLE_API_KEY_FOR_DISTANCE_MATRIX");
+        defaultShopId = populateNegotiationConfig("DEFAULT_STORE_ID");
     }
 
     public String populateNegotiationConfig(String key) {
@@ -29,5 +31,9 @@ public class NegotiationConfigHolder {
 
     public String getGoogleApiKeyForDistanceMatrix() {
         return googleApiKeyForDistanceMatrix;
+    }
+
+    public String getDefaultShopId() {
+        return defaultShopId;
     }
 }

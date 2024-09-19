@@ -4,6 +4,8 @@ import com.foldit.utilites.store.model.StoreDetails;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
+
 
 public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
 
@@ -19,6 +21,25 @@ public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
             "{ $project: { 'deliveryFeePerKmAfterThreshold': 1, 'freeDeliveryDistanceAllowed': 1, 'storeLocation': 1}}"
     })
     StoreDetails getShopDeliveryFeeRelatedInformation(String id);
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopWorkerIds': 1, 'shopAdminIds': 1}}"
+    })
+    StoreDetails getWorkerAndShopAdminIds(String id);
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopRiderIds': 1, 'shopAdminIds': 1}}"
+    })
+    StoreDetails getRiderAndShopAdminIds(String id);
+
+
+    @Aggregation(pipeline = {
+            "{ $match: { 'shopWorkerIds': { '$in': ?0 } }},",
+            "{ $project: { '_id': 1 }}"
+    })
+    StoreDetails getShopIdWhichWorkerIsPartOf(List<String> workerId);
 
 
 

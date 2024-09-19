@@ -2,6 +2,7 @@ package com.foldit.utilites.dao;
 
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.OrderDetails;
+import com.foldit.utilites.order.model.WorkflowStatus;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -24,5 +25,11 @@ public interface IOrderDetails extends MongoRepository<OrderDetails, String> {
             "{ $project: { 'orderDeliveryTimeStamp': 1, 'userAddress': 1, 'shopAddress': 1, 'billDetails.finalPrice': 1, '_id': 1, 'addedService':  1 }}"
     })
     List<BasicOrderDetails> getBasicOrderDetailsFromUserId(String userId);
+
+
+    @Aggregation(pipeline = {
+            "{ $match: { 'storeId': ?0, 'workerRiderWorkflowStatus': ?1 }}",
+    })
+    List<OrderDetails> getAllUnApprovedOrderList(String storeId, String workflowStatus);
 
 }

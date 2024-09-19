@@ -8,8 +8,8 @@ public enum WorkflowStatus {
     ACCEPTED(3),  //U  Worker MArk + Assigned to delivery boy
     // Rider ko text message pickup ke lie +Order status
     // Same otp everytime for pickup and drop
-
-    PICKED_UP(4), // U, Rider <-> OtpVerification
+    ASSIGNED_FOR_RIDER_PICKUP(4),
+    PICKED_UP(5), // U, Rider <-> OtpVerification
     // service and price final
     // Api for final price calculation
 
@@ -19,7 +19,7 @@ public enum WorkflowStatus {
 
     // Payment Razorpay ??????????????????
 
-    IN_STORE(5), // Worker mark order received
+    IN_STORE(6), // Worker mark order received
     // Rider update krdega order
     //
 

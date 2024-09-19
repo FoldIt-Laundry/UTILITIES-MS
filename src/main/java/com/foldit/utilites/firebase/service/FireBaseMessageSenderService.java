@@ -25,7 +25,6 @@ public class FireBaseMessageSenderService {
                     .builder()
                     .setTitle(notificationMessageRequest.getTitle())
                     .setBody(notificationMessageRequest.getBody())
-                    // .setImage(notificationMessageRequest.getImage())
                     .build();
             Message message = Message
                     .builder()

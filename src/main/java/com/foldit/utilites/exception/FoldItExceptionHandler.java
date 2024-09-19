@@ -49,4 +49,11 @@ public class FoldItExceptionHandler {
         return map_;
     }
 
+    @ExceptionHandler(value = RecordsValidationException.class)
+    public Map<String,String> throwRecordsValidationException(RecordsValidationException recordsValidationException) {
+        Map<String,String> map_ = new HashMap<>();
+        map_.put("errorMessage", String.format("Wrong input data provide, Please provide the correct data, Exception: %s", recordsValidationException.getMessage()));
+        return map_;
+    }
+
 }

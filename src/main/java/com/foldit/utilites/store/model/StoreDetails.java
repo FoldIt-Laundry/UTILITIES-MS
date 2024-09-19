@@ -24,6 +24,15 @@ public class StoreDetails {
     private List<ServiceOffered> serviceOffered;
     private List<String> shopAdminIds = new ArrayList<>();
     private List<String> shopWorkerIds = new ArrayList<>();
+    private List<String> shopRiderIds = new ArrayList<>();
+
+    public List<String> getShopRiderIds() {
+        return shopRiderIds;
+    }
+
+    public void setShopRiderIds(List<String> shopRiderIds) {
+        this.shopRiderIds = shopRiderIds;
+    }
 
     public Double getDeliveryFeePerKmAfterThreshold() {
         return deliveryFeePerKmAfterThreshold;

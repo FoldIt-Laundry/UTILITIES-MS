@@ -26,13 +26,6 @@ public class HomePageService {
         try {
             tokenValidationService.authTokenValidationFromUserOrMobile(authToken, userId, mobileNumber);
             servicesList = iServiceOffered.findAll();
-
-            double lat1 = 12.9210488; // Source latitude
-            double lon1 = 77.6781733; // Source longitude
-            double lat2 = 13.0621163; // Destination latitude
-            double lon2 = 77.6604752;  // Destination longitude
-
-
             return new ServiceAvailable(true, servicesList);
         } catch (Exception ex) {
             LOGGER.error("getAllAvailableService(): Error while fetching the service details from mongodb db, Exception: {}", ex.getMessage());
