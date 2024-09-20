@@ -4,8 +4,7 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.worker.model.ApproveOrderRequest;
-import com.foldit.utilites.worker.model.ApproveOrderResponse;
+import com.foldit.utilites.worker.model.*;
 import com.foldit.utilites.worker.service.WorkerActionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,37 @@ public class WorkerActionController {
             LOGGER.info("approvePendingOrder(): Request received to approve the pending order details :{} and authToken: {}", toJson(approveOrderRequest), authToken);
             workerActionService.approvePendingOrder(authToken, approveOrderRequest);
             return new ResponseEntity<>(new ApproveOrderResponse(true), HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            throw new AuthTokenValidationException(ex.getMessage());
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+    @PostMapping("/worker/markWorkInProgress")
+    public ResponseEntity<MarkWorkInProgressResponse> markWorkInProgress(@RequestHeader(value="authToken") String authToken, @RequestBody MarkWorkInProgressRequest markWorkInProgressRequest) {
+        try {
+            LOGGER.info("markWorkInProgress(): Request received to mark the work in progress and order has reached the shop for payload:{} and authToken: {}", toJson(markWorkInProgressRequest), authToken);
+            workerActionService.markWorkInProgress(authToken, markWorkInProgressRequest);
+            return new ResponseEntity<>(new MarkWorkInProgressResponse(true), HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            throw new AuthTokenValidationException(ex.getMessage());
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+
+    @PostMapping("/worker/markOrderReadyForDelivery ")
+    public ResponseEntity<MarkOrderReadyForDeliveryResponse> markOrderReadyForDelivery(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderReadyForDeliveryRequest markOrderReadyForDelivery) {
+        try {
+            LOGGER.info("markOrderReadyForDelivery(): Request received to mark the order ready for delivery for payload:{} and authToken: {}", toJson(markOrderReadyForDelivery), authToken);
+            workerActionService.markOrderReadyForDelivery(authToken, markOrderReadyForDelivery);
+            return new ResponseEntity<>(new MarkOrderReadyForDeliveryResponse(true), HttpStatus.OK);
         } catch (RecordsValidationException ex) {
             throw new AuthTokenValidationException(ex.getMessage());
         } catch (AuthTokenValidationException ex) {

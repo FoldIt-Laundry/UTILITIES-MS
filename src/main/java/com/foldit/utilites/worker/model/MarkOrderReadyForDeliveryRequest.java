@@ -1,8 +1,6 @@
 package com.foldit.utilites.worker.model;
 
-import com.foldit.utilites.order.model.OrderDetails;
-
-public class ApproveOrderRequest {
+public class MarkOrderReadyForDeliveryRequest {
     private String workerId;
     private String orderId;
     private String storeId;
@@ -10,6 +8,10 @@ public class ApproveOrderRequest {
 
     public String getWorkerId() {
         return workerId;
+    }
+
+    public void setWorkerId(String workerId) {
+        this.workerId = workerId;
     }
 
     public String getOrderId() {
@@ -26,9 +28,5 @@ public class ApproveOrderRequest {
 
     public void setStoreId(String storeId) {
         this.storeId = storeId;
-    }
-
-    public void setWorkerId(String workerId) {
-        this.workerId = workerId;
     }
 }

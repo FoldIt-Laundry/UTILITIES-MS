@@ -34,6 +34,12 @@ public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
     })
     StoreDetails getRiderAndShopAdminIds(String id);
 
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopAdminIds': 1}}"
+    })
+    StoreDetails getShopAdminIds(String id);
+
 
     @Aggregation(pipeline = {
             "{ $match: { 'shopWorkerIds': { '$in': ?0 } }},",

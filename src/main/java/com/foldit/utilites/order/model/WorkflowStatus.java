@@ -22,7 +22,7 @@ public enum WorkflowStatus {
     IN_STORE(6), // Worker mark order received
     // Rider update krdega order
     //
-
+    MAGIC_IN_PROGRESS(7),
     READY_FOR_DELIVERY(5), // R,W,A   Worker , Worker -> assign to Rider
     // Worker mark krdega and will assign it to rider to available drop
 
