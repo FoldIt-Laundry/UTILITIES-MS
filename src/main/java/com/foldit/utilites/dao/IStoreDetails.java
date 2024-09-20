@@ -48,5 +48,12 @@ public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
     StoreDetails getShopIdWhichWorkerIsPartOf(List<String> workerId);
 
 
+    @Aggregation(pipeline = {
+            "{ $match: { 'shopRiderIds': { '$in': ?0 } }},",
+            "{ $project: { '_id': 1 }}"
+    })
+    StoreDetails getShopIdWhichRiderIsPartOf(List<String> riderId);
+
+
 
 }

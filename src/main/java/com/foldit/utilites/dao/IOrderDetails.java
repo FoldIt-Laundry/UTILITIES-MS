@@ -37,4 +37,10 @@ public interface IOrderDetails extends MongoRepository<OrderDetails, String> {
     })
     OrderDetails getUserIdFromOrderId(String orderId);
 
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'userId': 1, 'checkOutOtp': 1 }}"
+    })
+    OrderDetails getUserIdAndOtpFromOrderId(String orderId);
+
 }

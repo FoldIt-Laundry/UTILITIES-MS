@@ -1,35 +1,16 @@
 package com.foldit.utilites.order.model;
 
 public enum WorkflowStatus {
-    ORDER_PLACED(1), //U  User -> , Notification to be admin + worker  ( ORDER MESSAGE + ORDER ID  )
-    // Worker fetch order ( Unaccepted ) -> Accept -> Backend ( Time and date fill  ) + Order Mark + USer Due date
-    // Worker fetch order ( Today's order + Time Wise ) ( Pending orders + sorted by date and time )
+    ORDER_PLACED(1),
     PENDING_WORKER_APPROVAL(2),
-    ACCEPTED(3),  //U  Worker MArk + Assigned to delivery boy
-    // Rider ko text message pickup ke lie +Order status
-    // Same otp everytime for pickup and drop
+    ACCEPTED(3),
     ASSIGNED_FOR_RIDER_PICKUP(4),
-    PICKED_UP(5), // U, Rider <-> OtpVerification
-    // service and price final
-    // Api for final price calculation
-
-    // Rider ko pickup wise otp verification ke lie
-    // All orders for pickup :- Sort the data based on time and date  ??????
-    // All order for drop :-
-
-    // Payment Razorpay ??????????????????
-
-    IN_STORE(6), // Worker mark order received
-    // Rider update krdega order
-    //
+    PICKED_UP(5),
+    IN_STORE(6),
     MAGIC_IN_PROGRESS(7),
-    READY_FOR_DELIVERY(5), // R,W,A   Worker , Worker -> assign to Rider
-    // Worker mark krdega and will assign it to rider to available drop
-
-    OUT_FOR_DELIVERY(6), // U,  Rider -> Marks it
-    //
-
-    DELIVERED(7); // U  ,
+    READY_FOR_DELIVERY(8),
+    OUT_FOR_DELIVERY(9),
+    DELIVERED(10);
 
 
     public final int value;

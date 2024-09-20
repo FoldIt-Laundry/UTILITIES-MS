@@ -176,7 +176,7 @@ public class WorkerActionService {
             });
 
             // Send notification to Admin
-            CompletableFuture<Void> sendNotificationToRiderAndAdmin = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
                 StoreDetails shopWorkerAdminIds = iStoreDetails.getShopAdminIds(markWorkInProgressRequest.getStoreId());
                 shopWorkerAdminIds.getShopAdminIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
@@ -195,7 +195,7 @@ public class WorkerActionService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void markOrderReadyForDelivery(String authToken, MarkOrderReadyForDeliveryRequest markOrderReadyForDeliveryRequest) {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, markOrderReadyForDeliveryRequest.getWorkerId());
@@ -249,7 +249,7 @@ public class WorkerActionService {
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            LOGGER.error("markWorkInProgress(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: %s", toJson(markWorkInProgressRequest), authToken, ex.getMessage());
+            LOGGER.error("markOrderReadyForDelivery(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: %s", toJson(markOrderReadyForDeliveryRequest), authToken, ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }
