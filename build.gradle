@@ -36,6 +36,9 @@ dependencies {
 	implementation 'com.google.firebase:firebase-admin:9.3.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+
 }
 
 tasks.named('test') {
