@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+## Config Files ##
+/src/main/resources/foldit-ad420-firebase-adminsdk-knq0s-a2720b8e03.json
