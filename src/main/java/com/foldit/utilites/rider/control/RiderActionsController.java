@@ -43,6 +43,35 @@ public class RiderActionsController {
     }
 
 
+    @GetMapping("/rider/getAllPickUpOrderDetails")
+    public ResponseEntity<List<OrderDetails>> getAllPickUpOrderDetails(@RequestHeader(value="authToken") String authToken, @RequestParam("riderId") String riderId) {
+        List<OrderDetails> orderDetails;
+        try {
+            LOGGER.info("getAllPickUpOrderDetails(): Get all pickup order details for riderId: {} and authToken: {}", riderId, authToken);
+            orderDetails = riderActionsService.getAllPickUpOrderDetails(authToken, riderId);
+            return new ResponseEntity<>(orderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+    @GetMapping("/rider/getAllDeliveryOrderDetails")
+    public ResponseEntity<List<OrderDetails>> getAllDeliveryOrderDetails(@RequestHeader(value="authToken") String authToken, @RequestParam("riderId") String riderId) {
+        List<OrderDetails> orderDetails;
+        try {
+            LOGGER.info("getAllPickUpOrderDetails(): Get all delivery order details for riderId: {} and authToken: {}", riderId, authToken);
+            orderDetails = riderActionsService.getAllDeliveryOrderDetails(authToken, riderId);
+            return new ResponseEntity<>(orderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+
     @PostMapping("/rider/markOrderOutForDelivery")
     public ResponseEntity<MarkOrderOutForDeliveryResponse> markOrderOutForDelivery(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderOutForDeliveryRequest markOrderOutForDeliveryRequest) {
         try {

@@ -2,30 +2,48 @@
 0) User onboarding from admin
 1) Need to add check whether the user is RIDER and WORKER
 
+0) Admin to get the all orders data ( Batch Size ( Pickup/Drop (1,2,3,4,5) ) )
+1) Batch size configuation needs to make an api ( Configuration  )
+2) Post api to change the batch size
+3) Default order for pickup/drop ( FIFO )
+    <------->
+4) Admin (   10 1 2 3 4 5 6  8 9  11 12  ) REDIS CACHE
 
 
-Washing :-     3  Kg
-Ironing 20 :-  15 Quantity
+OTP :-
 
-Rider details addition -> Confirm /  ->
+BackUp :- Parchi ( De-sign )
 
-1) How the rider add the details and otp verification takes places and how it will take place
+-- Rider Mark pickup
 
+ -- Admin api to add the order quantity ( WORKFLOW STATUS )
+ -- Payment calculate and show
+ -- Notification to user
 
-2) Rider ka flow kaise chlega for next order
-
-
-
-
-
-Status
+//  -- Pay ()
 
 
 
-- ORDER
 
--- Woker
+-- Version
+-- Name api first time
 
--- Delivery
 
- - OnBoard a Delivery partner
+
+-- CheckOut fixed otp
+
+--- (Edit)Rider :- 5 ,  55 ->    Submit DB    <->    User info,  Estimate, ( Approve or Reject )
+
+--- 4 digit mobile number ?
+
+
+
+-----------------------
+How to calculate the offer price to the user
+------------------------
+
+
+
+
+
+1) Shop admin changes the price of any service how to refresh call ? Api is already there need to call it

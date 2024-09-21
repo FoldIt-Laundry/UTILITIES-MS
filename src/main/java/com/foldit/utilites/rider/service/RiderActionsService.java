@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
@@ -53,6 +54,32 @@ public class RiderActionsService {
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private TokenValidationService tokenValidationService;
+
+    @Transactional(readOnly = true)
+    public List<OrderDetails> getAllPickUpOrderDetails(String authToken, String riderId) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, riderId);
+            return iOrderDetails.getAllPickUpOrderDetailsFromRiderId(String.valueOf(ASSIGNED_FOR_RIDER_PICKUP));
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getAllPickUpOrderDetails(): Exception occurred while performing read and write operation for riderId: {} and authToken: {} from monogoDb, Exception: %s", riderId, authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderDetails> getAllDeliveryOrderDetails(String authToken, String riderId) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, riderId);
+            return iOrderDetails.getAllPickUpOrderDetailsFromRiderId(String.valueOf(READY_FOR_DELIVERY));
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getAllDeliveryOrderDetails(): Exception occurred while performing read and write operation for riderId: {} and authToken: {} from monogoDb, Exception: %s", riderId, authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
 
     @Transactional
     public void markOrderOutForDelivery(String authToken, MarkOrderOutForDeliveryRequest deliveryRequest) {

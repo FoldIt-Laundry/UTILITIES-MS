@@ -1,11 +1,17 @@
 package com.foldit.utilites.negotiationconfigholder;
 
 import com.foldit.utilites.dao.IConfigDetails;
+import com.foldit.utilites.homepage.model.Services;
+import com.foldit.utilites.dao.IServiceOffered;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class NegotiationConfigHolder {

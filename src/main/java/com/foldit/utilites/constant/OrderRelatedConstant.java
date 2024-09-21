@@ -10,6 +10,7 @@ public interface OrderRelatedConstant {
     String USER_UPDATE_ORDER_ACCEPTED  = "Order Accepted, Your order will be picked up soon";
     String USER_UPDATE_MAGIC_IN_PROGRESS  = "Order has reached store and magic has been started";
     String USER_UPDATE_ORDER_OUT_FOR_DELIVERY  = "Please share otp %s to complete the delivery";
+    String USER_UPDATE_ORDER_QUANTITY_DETAILS_UPDATED  = "Your total amount for the order is %s";
     String USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY  = "Order has been delivered successfully";
 
 

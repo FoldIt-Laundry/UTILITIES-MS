@@ -34,12 +34,6 @@ public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
     })
     StoreDetails getRiderAndShopAdminIds(String id);
 
-    @Aggregation(pipeline = {
-            "{ $match: { '_id': ?0 }},",
-            "{ $project: { 'shopAdminIds': 1}}"
-    })
-    StoreDetails getShopAdminIds(String id);
-
 
     @Aggregation(pipeline = {
             "{ $match: { 'shopWorkerIds': { '$in': ?0 } }},",
@@ -54,6 +48,34 @@ public interface IStoreDetails extends MongoRepository<StoreDetails, String> {
     })
     StoreDetails getShopIdWhichRiderIsPartOf(List<String> riderId);
 
+
+    /**
+     * Getting ids for people ( Rider, Worker, Admin )
+      */
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopAdminIds': 1, 'shopRiderIds': 1, 'shopWorkerIds': 1}}"
+    })
+    StoreDetails getShopAdminWorkerRiderIds(String id);
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopAdminIds': 1}}"
+    })
+    StoreDetails getShopAdminIds(String id);
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopRiderIds': 1}}"
+    })
+    StoreDetails getShopRiderIds(String id);
+
+    @Aggregation(pipeline = {
+            "{ $match: { '_id': ?0 }},",
+            "{ $project: { 'shopWorkerIds': 1}}"
+    })
+    StoreDetails getShopWorkerIds(String id);
 
 
 }

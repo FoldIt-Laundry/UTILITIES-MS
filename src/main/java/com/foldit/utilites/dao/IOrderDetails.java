@@ -43,4 +43,10 @@ public interface IOrderDetails extends MongoRepository<OrderDetails, String> {
     })
     OrderDetails getUserIdAndOtpFromOrderId(String orderId);
 
+    @Aggregation(pipeline = {
+            "{ $match: { 'workerRiderWorkflowStatus': ?1 }}",
+    })
+    List<OrderDetails> getAllPickUpOrderDetailsFromRiderId(String workflowStatus);
+
+
 }
