@@ -12,11 +12,8 @@ import com.foldit.utilites.negotiationconfigholder.ServiceNegotiationConfigHolde
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.CostStructure;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.order.model.WorkflowTransitionDetails;
 import com.foldit.utilites.shopadmin.control.ShopAdminOrderOperationsController;
-import com.foldit.utilites.shopadmin.interfaces.CalculateBillDetails;
 import com.foldit.utilites.shopadmin.model.AddOrderQuantityRequest;
-import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.tokenverification.service.TokenValidationService;
 import com.foldit.utilites.user.model.UserDetails;
 import com.mongodb.client.result.UpdateResult;
@@ -30,15 +27,12 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-import static com.foldit.utilites.constant.OrderRelatedConstant.*;
-import static com.foldit.utilites.constant.TimeStamp.istTime;
+import static com.foldit.utilites.constant.OrderRelatedConstant.ORDER_UPDATE;
+import static com.foldit.utilites.constant.OrderRelatedConstant.USER_UPDATE_ORDER_QUANTITY_DETAILS_UPDATED;
 import static com.foldit.utilites.helper.CalculateBillDetails.getFinalBillDetailsFromQuantity;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
-import static com.foldit.utilites.order.model.WorkflowStatus.OUT_FOR_DELIVERY;
-import static com.foldit.utilites.order.model.WorkflowStatus.READY_FOR_DELIVERY;
 
 @Service
 public class ShopAdminOrderOperationsService {
@@ -94,7 +88,6 @@ public class ShopAdminOrderOperationsService {
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, String.format(USER_UPDATE_ORDER_QUANTITY_DETAILS_UPDATED, billDetails.getFinalPrice())));
                 return null;
             });
-
 
         } catch (RecordsValidationException ex) {
             throw new AuthTokenValidationException(ex.getMessage());

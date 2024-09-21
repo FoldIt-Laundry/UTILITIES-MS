@@ -14,10 +14,9 @@ public class CalculateBillDetails {
     public static CostStructure getFinalBillDetailsFromQuantity(Map<String,Double> serviceIdVsPrice, Map<String,Double> serviceIdVsQuantity) {
         CostStructure costStructure = new CostStructure();
         final double[] finalPrice = {0};
-
         serviceIdVsQuantity.entrySet().forEach( inputServiceIdAndQuantity -> {
             if(!serviceIdVsQuantity.containsKey(inputServiceIdAndQuantity.getKey())) {
-                String message = "";
+                String message = String.format("getFinalBillDetailsFromQuantity(): Given serviceId: %s does not exist in our system", inputServiceIdAndQuantity.getKey());
                 LOGGER.error(message);
                 throw new RecordsValidationException(message);
             }
