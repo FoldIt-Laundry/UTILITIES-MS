@@ -7,6 +7,7 @@ import com.foldit.utilites.negotiationconfigholder.model.ChangeBatchSlotTimingRe
 import com.foldit.utilites.negotiationconfigholder.model.Configuration;
 import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,13 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.negotiationconfigholder.constant.NegotiationConstant.*;
 
 @Service
@@ -34,8 +42,8 @@ public class NegotiationConfigService {
     public void  changeBatchSlotTimings(String authToken, String userRole, ChangeBatchSlotTimingRequest request) {
         try {
             redisTokenVerificationService.validateAuthToken(request.userId(), authToken);
-            if(!userRole.equalsIgnoreCase("SUPER_ADMIN")) {
-                LOGGER.error("changeSlotsQuantityToShow(): Given userId is not super admin, supplied userId: {} and userRole: {}", request.userId(), userRole);
+            if(!userRole.equalsIgnoreCase("SUPER_ADMIN") || !validationChangeBatchSlotTimingsRequest(request)) {
+                LOGGER.error("changeSlotsQuantityToShow(): Given userId is not super admin or validation failed for request: {} , supplied userId: {} and userRole: {}", request.userId(), toJson(request), userRole);
                 throw new AuthTokenValidationException(null);
             }
 
@@ -58,7 +66,7 @@ public class NegotiationConfigService {
     public void  changeSlotsQuantityToShow(String authToken,String userRole,Integer slotsQuantity,String userId) {
         try {
             redisTokenVerificationService.validateAuthToken(userId, authToken);
-            if(!userRole.equalsIgnoreCase("SUPER_ADMIN")) {
+            if(!userRole.equalsIgnoreCase("SUPER_ADMIN") || slotsQuantity<5) {
                 LOGGER.error("changeSlotsQuantityToShow(): Given userId is not super admin, supplied userId: {} and userRole: {}", userId, userRole);
                 throw new AuthTokenValidationException(null);
             }
@@ -76,7 +84,7 @@ public class NegotiationConfigService {
         Query query = new Query(Criteria.where("configKey").is(key));
         Update update = new Update().set("configValue", value);
         UpdateResult updateResult = mongoTemplate.updateFirst(query, update, Configuration.class);
-        if(updateResult.getModifiedCount()!=1) {
+        if(updateResult.getModifiedCount()==0 && updateResult.getMatchedCount()==0) {
             String errorMessage = String.format("changeSlotsQuantityToShow(): No matching records exits in db with given query: %s and update: %s and userId: %s",query, update, userId);
             LOGGER.error(errorMessage);
             throw new AuthTokenValidationException(errorMessage);
@@ -88,13 +96,25 @@ public class NegotiationConfigService {
         Query query = new Query(Criteria.where("configKey").is(key));
         Update update = new Update().set("configValue", value);
         UpdateResult updateResult = mongoTemplate.updateFirst(query, update, Configuration.class);
-        if(updateResult.getModifiedCount()!=1) {
+        if(updateResult.getModifiedCount()==0 && updateResult.getMatchedCount()==0) {
             String errorMessage = String.format("changeSlotsQuantityToShow(): No matching records exits in db with given query: %s and update: %s and userId: %s",query, update, userId);
             LOGGER.error(errorMessage);
             throw new AuthTokenValidationException(errorMessage);
         }
     }
 
+    private boolean validationChangeBatchSlotTimingsRequest(ChangeBatchSlotTimingRequest request) {
+        if(StringUtils.isBlank(request.lastDateToShowOldSlotsTimings())) return false;
+        if(request.oldTimeSlotsBatchSizeInHourDifference()<0 || request.newTimeSlotsBatchSizeInHourDifference()<0) return false;
+        if(request.oldTimeSlotsBatchSizeInHourDifference()>3 || request.newTimeSlotsBatchSizeInHourDifference()>3) return false;
 
+        ZonedDateTime istTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+        LocalDate currentDate = istTime.toLocalDate();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate input = LocalDate.parse(request.lastDateToShowOldSlotsTimings(),formatter);
+        if(input.isBefore(currentDate)) return  false;
+
+        return true;
+    }
 
 }
