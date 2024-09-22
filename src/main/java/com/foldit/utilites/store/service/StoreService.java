@@ -98,7 +98,7 @@ public class StoreService {
         AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, userId, mobileNumber);
-            StoreDetails storeDetails = iStoreDetails.getShopTimingsFromStoreId("66dcbe4b2f87e5390bc4177e");
+            StoreDetails storeDetails = iStoreDetails.getShopTimingsFromStoreId(negotiationConfigHolder.getDefaultShopId());
             timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getTimeSlotsForScheduledPickUp(storeDetails.getOperatingHourStartTime(), storeDetails.getOperatingHourEndTime()));
             return timeSlotsResponse;
         } catch (AuthTokenValidationException ex) {
@@ -112,7 +112,7 @@ public class StoreService {
     public Double deliveryFeeCalculator(String authToken, DeliveryFeeCalculatorRequest deliveryFeeCalculatorRequest) {
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, deliveryFeeCalculatorRequest.getUserId(), deliveryFeeCalculatorRequest.getMobileNumber());
-            StoreDetails storeDetails = iStoreDetails.getShopDeliveryFeeRelatedInformation("66dcbe4b2f87e5390bc4177e");
+            StoreDetails storeDetails = iStoreDetails.getShopDeliveryFeeRelatedInformation(negotiationConfigHolder.getDefaultShopId());
             deliveryFeeCalculatorRequest.setGoogleApiKey(negotiationConfigHolder.getGoogleApiKeyForDistanceMatrix());
             return calculateDeliveryFee(deliveryFeeCalculatorRequest, storeDetails.getDeliveryFeePerKmAfterThreshold(), storeDetails.getFreeDeliveryDistanceAllowed());
         } catch (AuthTokenValidationException ex) {

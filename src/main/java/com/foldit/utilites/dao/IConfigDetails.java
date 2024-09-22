@@ -1,6 +1,6 @@
 package com.foldit.utilites.dao;
 
-import com.foldit.utilites.negotiationconfigholder.Configuration;
+import com.foldit.utilites.negotiationconfigholder.model.Configuration;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

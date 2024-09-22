@@ -1,4 +1,4 @@
-package com.foldit.utilites.negotiationconfigholder;
+package com.foldit.utilites.negotiationconfigholder.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -32,3 +32,5 @@ public class Configuration {
         this.configValue = configValue;
     }
 }
+
+

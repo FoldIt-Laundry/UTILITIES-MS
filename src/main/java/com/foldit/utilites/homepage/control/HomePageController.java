@@ -30,9 +30,6 @@ public class HomePageController {
             throw new MongoDBReadException(ex.getMessage());
         }
     }
-
-
-
     @GetMapping("/test")
     public String get(){
         return "Application up and running";
