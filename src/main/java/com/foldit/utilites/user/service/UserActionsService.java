@@ -13,6 +13,7 @@ import com.foldit.utilites.user.model.DeliveryAndFeeDetails;
 import com.foldit.utilites.user.model.OnBoardNewUserLocation;
 import com.foldit.utilites.user.model.UserDetails;
 import com.foldit.utilites.user.model.UserLocation;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,9 @@ public class UserActionsService {
 
             Query query = new Query(Criteria.where("id").is(onBoardNewUserLocation.getUserId()));
             Update update = new Update().addToSet("locations", onBoardNewUserLocation.getUserLocation());
+            if(StringUtils.isNotBlank(onBoardNewUserLocation.getUserName())) {
+                update.set("userName", onBoardNewUserLocation.getUserName());
+            }
             mongoTemplate.updateFirst(query, update, UserLocation.class);
             return onBoardNewUserLocation;
         } catch (AuthTokenValidationException ex) {

@@ -153,11 +153,11 @@ public class WorkerActionService {
                     where("_id").is(markWorkInProgressRequest.getOrderId())
                     .where("storeId").is(markWorkInProgressRequest.getStoreId())
                     .where("userWorkflowStatus").is(ACCEPTED)
-                    .where("workerRiderWorkflowStatus").is(PICKED_UP));
+                    .where("workerRiderWorkflowStatus").is(ORDER_PICKED_UP));
             Update update = new Update()
                     .set("userWorkflowStatus", MAGIC_IN_PROGRESS)
                     .set("workerRiderWorkflowStatus", IN_STORE)
-                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(markWorkInProgressRequest.getWorkerId(), ACCEPTED + " " + PICKED_UP, istTime.toLocalDateTime(), MAGIC_IN_PROGRESS + " " + IN_STORE));
+                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(markWorkInProgressRequest.getWorkerId(), ACCEPTED + " " + ORDER_PICKED_UP, istTime.toLocalDateTime(), MAGIC_IN_PROGRESS + " " + IN_STORE));
 
             UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
 

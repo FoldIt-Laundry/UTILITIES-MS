@@ -8,12 +8,30 @@ import java.util.List;
 public class UserDetails {
 
     private String id;
-    private String name;
+    private String userName;
     private String mobileNumber;
+    private UserRole userRole;
+    private String checkOutOtp;
     private String fcmToken;
     private List<UserLocation> locations;
 
     public UserDetails() {
+    }
+
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
+    public String getCheckOutOtp() {
+        return checkOutOtp;
+    }
+
+    public void setCheckOutOtp(String checkOutOtp) {
+        this.checkOutOtp = checkOutOtp;
     }
 
     public String getFcmToken() {
@@ -36,12 +54,12 @@ public class UserDetails {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getMobileNumber() {

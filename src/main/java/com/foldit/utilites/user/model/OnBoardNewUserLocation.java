@@ -6,6 +6,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class OnBoardNewUserLocation {
     private UserLocation userLocation;
     private String userId;
+    private String userName;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
     public UserLocation getUserLocation() {
         return userLocation;

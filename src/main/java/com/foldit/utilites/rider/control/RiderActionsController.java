@@ -3,10 +3,7 @@ package com.foldit.utilites.rider.control;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
-import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryResponse;
-import com.foldit.utilites.rider.model.OrderDeliveredRequest;
-import com.foldit.utilites.rider.model.OrderDeliveredResponse;
+import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.rider.service.RiderActionsService;
 import com.foldit.utilites.worker.controller.WorkerActionController;
 import org.slf4j.Logger;
@@ -64,6 +61,19 @@ public class RiderActionsController {
             LOGGER.info("getAllPickUpOrderDetails(): Get all delivery order details for riderId: {} and authToken: {}", riderId, authToken);
             orderDetails = riderActionsService.getAllDeliveryOrderDetails(authToken, riderId);
             return new ResponseEntity<>(orderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+    @PostMapping("/rider/markOrderPickedUpFromCustomerHome")
+    public ResponseEntity<MarkOrderPickedUpResponse> markOrderPickedUpFromCustomerHome(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderPickedUpRequest markOrderPickedUpRequest) {
+        try {
+            LOGGER.info("markOrderPickedUpFromCustomerHome(): Initiating request to mark the order picked up from customer home, request details: {} and authToken: {}", toJson(markOrderPickedUpRequest), authToken);
+            riderActionsService.markOrderPickedUpFromCustomerHome(authToken, markOrderPickedUpRequest);
+            return new ResponseEntity<>(new MarkOrderPickedUpResponse(true), HttpStatus.OK);
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {

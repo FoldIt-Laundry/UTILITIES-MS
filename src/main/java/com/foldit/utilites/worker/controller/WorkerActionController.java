@@ -70,7 +70,7 @@ public class WorkerActionController {
     }
 
 
-    @PostMapping("/worker/markOrderReadyForDelivery ")
+    @PostMapping("/worker/markOrderReadyForDelivery")
     public ResponseEntity<MarkOrderReadyForDeliveryResponse> markOrderReadyForDelivery(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderReadyForDeliveryRequest markOrderReadyForDelivery) {
         try {
             LOGGER.info("markOrderReadyForDelivery(): Request received to mark the order ready for delivery for payload:{} and authToken: {}", toJson(markOrderReadyForDelivery), authToken);

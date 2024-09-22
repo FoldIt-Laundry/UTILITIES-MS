@@ -9,6 +9,7 @@ public interface OrderRelatedConstant {
     String USER_UPDATE_ORDER_PLACED  = "Order Placed";
     String USER_UPDATE_ORDER_ACCEPTED  = "Order Accepted, Your order will be picked up soon";
     String USER_UPDATE_MAGIC_IN_PROGRESS  = "Order has reached store and magic has been started";
+    String USER_UPDATE_ORDER_PICKED_UP  = "Your order has been picked up";
     String USER_UPDATE_ORDER_OUT_FOR_DELIVERY  = "Please share otp %s to complete the delivery";
     String USER_UPDATE_ORDER_QUANTITY_DETAILS_UPDATED  = "Your total amount for the order is %s";
     String USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY  = "Order has been delivered successfully";
@@ -23,6 +24,7 @@ public interface OrderRelatedConstant {
     String ADMIN_ORDER_ACCEPTED_REQUEST_UPDATE = "Order Accepted, Worker has accepted the order";
     String ADMIN_ORDER_WORK_IN_PROGRESS_REQUEST_UPDATE = "Order Reached Store, Worker has accepted the order and started working on the order";
     String ADMIN_ORDER_READY_FOR_DELIVERY = "Order has been completed by worker and assigned to the rider";
+    String ADMIN_ORDER_RIDER_PICKED_UP_THE_ORDER = "Rider has picked up the order %s from the user";
 
 
 }

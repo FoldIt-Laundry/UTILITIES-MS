@@ -9,9 +9,11 @@ import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
+import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
 import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
+import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
 import com.foldit.utilites.rider.model.OrderDeliveredRequest;
 import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.tokenverification.service.TokenValidationService;
@@ -51,6 +53,8 @@ public class RiderActionsService {
     @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
     @Autowired
+    private ShopConfigurationHolder shopConfigurationHolder;
+    @Autowired
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private TokenValidationService tokenValidationService;
@@ -77,6 +81,63 @@ public class RiderActionsService {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
             LOGGER.error("getAllDeliveryOrderDetails(): Exception occurred while performing read and write operation for riderId: {} and authToken: {} from monogoDb, Exception: %s", riderId, authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+
+    @Transactional
+    public void markOrderPickedUpFromCustomerHome(String authToken, MarkOrderPickedUpRequest orderRequest) {
+        try {
+            String shopId = negotiationConfigHolder.getDefaultShopId();
+            tokenValidationService.authTokenValidationFromUserId(authToken, orderRequest.getRiderId());
+            if (shopConfigurationHolder.getStoreRiderIds().contains(orderRequest.getRiderId())) {
+                String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): Given riderId: %s is not entitled to mark any order status for the storeId: %s", orderRequest.getRiderId(), shopId);
+                LOGGER.error(errorMessage);
+                throw new RecordsValidationException(errorMessage);
+            }
+
+            Query query = new Query(Criteria
+                    .where("_id").is(orderRequest.getOrderId())
+                    .where("userWorkflowStatus").is(ACCEPTED)
+                    .where("workerRiderWorkflowStatus").is(ASSIGNED_FOR_RIDER_PICKUP));
+            Update update = new Update()
+                    .set("userWorkflowStatus", ORDER_PICKED_UP)
+                    .set("workerRiderWorkflowStatus", ORDER_PICKED_UP)
+                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(orderRequest.getRiderId(), ACCEPTED + " " + ASSIGNED_FOR_RIDER_PICKUP, istTime.toLocalDateTime(), ORDER_PICKED_UP + " " + ORDER_PICKED_UP));
+
+            UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+
+            if (updateResult.getModifiedCount() != 1) {
+                String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): No records gets updated for the query: %s and update: %s and for payload:  %s", toJson(query), toJson(update), toJson(orderRequest));
+                LOGGER.error(errorMessage);
+                throw new RecordsValidationException(errorMessage);
+            }
+
+            // Send notification to user
+            CompletableFuture<Void> sendNotificationToUser = CompletableFuture.supplyAsync(() -> {
+                OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(orderRequest.getOrderId());
+                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
+                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PICKED_UP));
+                return null;
+            });
+
+            // Send notification to admin
+            CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
+                shopConfigurationHolder.getStoreAdminIds().forEach(storeAdminId -> {
+                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeAdminId);
+                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, String.format(ADMIN_ORDER_RIDER_PICKED_UP_THE_ORDER, orderRequest.getOrderId())));
+                });
+                return null;
+            });
+
+
+        } catch (RecordsValidationException ex) {
+            throw new AuthTokenValidationException(ex.getMessage());
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("markOrderPickedUpFromCustomerHome(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: %s", toJson(orderRequest), authToken, ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }
@@ -113,7 +174,7 @@ public class RiderActionsService {
             CompletableFuture<Void> sendNotificationToUser = CompletableFuture.supplyAsync(() -> {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(deliveryRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_OUT_FOR_DELIVERY, String.format(USER_UPDATE_ORDER_OUT_FOR_DELIVERY, orderDetails.getCheckOutOtp())));
+                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_OUT_FOR_DELIVERY, String.format(USER_UPDATE_ORDER_OUT_FOR_DELIVERY, userDetails.getCheckOutOtp())));
                 return null;
             });
 

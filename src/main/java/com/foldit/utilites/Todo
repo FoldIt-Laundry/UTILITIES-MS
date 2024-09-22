@@ -14,27 +14,12 @@ OTP :-
 
 BackUp :- Parchi ( De-sign )
 
--- Rider Mark pickup
-
- -- Admin api to add the order quantity ( WORKFLOW STATUS )
- -- Payment calculate and show
- -- Notification to user
-
-//  -- Pay ()
-
-
-
 
 -- Version
 -- Name api first time
 
 
-
 -- CheckOut fixed otp
-
---- (Edit)Rider :- 5 ,  55 ->    Submit DB    <->    User info,  Estimate, ( Approve or Reject )
-
---- 4 digit mobile number ?
 
 
 
@@ -47,3 +32,4 @@ How to calculate the offer price to the user
 
 
 1) Shop admin changes the price of any service how to refresh call ? Api is already there need to call it ? Add api to change the price for it
+2) Utility controller to refresh the all the configurations

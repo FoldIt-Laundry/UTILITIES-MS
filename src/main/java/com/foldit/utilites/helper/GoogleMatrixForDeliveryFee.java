@@ -1,6 +1,9 @@
 package com.foldit.utilites.helper;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foldit.utilites.exception.GoogleApiException;
 import com.foldit.utilites.store.model.DeliveryFeeCalculatorRequest;
 import com.foldit.utilites.user.model.DeliveryAndFeeDetails;
@@ -43,7 +46,7 @@ public class GoogleMatrixForDeliveryFee {
     }
 
 
-    private static double calculateDistance(DeliveryFeeCalculatorRequest deliveryFeeCalculatorRequest) {
+    private static double calculateDistance(DeliveryFeeCalculatorRequest deliveryFeeCalculatorRequest) throws JsonProcessingException {
         String source = deliveryFeeCalculatorRequest.getSourceLatitude() + "," + deliveryFeeCalculatorRequest.getSourceLongitude();
         String destination = deliveryFeeCalculatorRequest.getDestinationLatitude() + "," + deliveryFeeCalculatorRequest.getDestinationLongitude();
         Double distance = null;
@@ -56,9 +59,24 @@ public class GoogleMatrixForDeliveryFee {
         String regex = "distance=\\{text=([0-9.]+\\s*km),";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(response.getBody().toString());
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode rootNode = objectMapper.readTree(toJson(response.getBody()));
 
-        if (matcher.find()) {
-            distance = Double.valueOf(matcher.group(1).split(" ")[0]); // Extracts the distance text (25.3 km)
+        // Navigate to the 'text' field inside 'distance'
+        String distanceText = rootNode
+                .path("rows")
+                .get(0)
+                .path("elements")
+                .get(0)
+                .path("distance")
+                .path("text")
+                .asText();
+
+        if (distanceText.contains("Km")) {
+            distance = Double.valueOf(distanceText.split(" ")[0]);
+            System.out.println("Distance: " + distance);
+        } else if (distanceText.contains("m")) {
+            distance = Math.pow(10, (int) Math.log10(Double.valueOf(distanceText.split(" ")[0]) + 1));
             System.out.println("Distance: " + distance);
         } else {
             System.out.println("Distance not found in the input string.");

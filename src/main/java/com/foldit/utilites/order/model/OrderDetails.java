@@ -23,9 +23,6 @@ public class OrderDetails {
     private ScheduledTime scheduledTimings;
     private Double rating;
     private Double timeLeftForDelivery = 8.00;
-    private String checkOutOtp = generate4DigitOtpCode();
-    private String checkInOtp = generate4DigitOtpCode();
-
     public ScheduledTime getScheduledTimings() {
         return scheduledTimings;
     }
@@ -34,28 +31,12 @@ public class OrderDetails {
         this.scheduledTimings = scheduledTimings;
     }
 
-    public String getCheckInOtp() {
-        return checkInOtp;
-    }
-
-    public void setCheckInOtp(String checkInOtp) {
-        this.checkInOtp = checkInOtp;
-    }
-
     public Double getRating() {
         return rating;
     }
 
     public void setRating(Double rating) {
         this.rating = rating;
-    }
-
-    public String getCheckOutOtp() {
-        return checkOutOtp;
-    }
-
-    public void setCheckOutOtp(String checkOutOtp) {
-        this.checkOutOtp = checkOutOtp;
     }
 
     public String getId() {
