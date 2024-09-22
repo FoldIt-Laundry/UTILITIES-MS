@@ -23,6 +23,16 @@ public class OrderDetails {
     private ScheduledTime scheduledTimings;
     private Double rating;
     private Double timeLeftForDelivery = 8.00;
+    private String checkOutOtp;
+
+    public String getCheckOutOtp() {
+        return checkOutOtp;
+    }
+
+    public void setCheckOutOtp(String checkOutOtp) {
+        this.checkOutOtp = checkOutOtp;
+    }
+
     public ScheduledTime getScheduledTimings() {
         return scheduledTimings;
     }

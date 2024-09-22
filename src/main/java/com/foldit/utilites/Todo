@@ -1,6 +1,4 @@
 
-0) User onboarding from admin
-1) Need to add check whether the user is RIDER and WORKER
 
 0) Admin to get the all orders data ( Batch Size ( Pickup/Drop (1,2,3,4,5) ) )
 1) Batch size configuation needs to make an api ( Configuration  )
@@ -12,22 +10,15 @@
 
 OTP :-
 
-BackUp :- Parchi ( De-sign )
 
 
 -- Version
 -- Name api first time
 
 
--- CheckOut fixed otp
-
-
-
 -----------------------
 How to calculate the offer price to the user
 ------------------------
-
-
 
 
 

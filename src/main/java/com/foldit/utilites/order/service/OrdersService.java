@@ -93,8 +93,12 @@ public class OrdersService {
     @Transactional
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
+
+            UserDetails userDetails = iUserDetails.findById(orderDetails.getUserId()).get();
+
             validateAuthToken(orderDetails.getUserId(), authToken);
             orderDetails.setStoreId(negotiationConfigHolder.getDefaultShopId());
+            orderDetails.setCheckOutOtp(userDetails.getCheckOutOtp());
             orderDetails.setUserWorkflowStatus(ORDER_PLACED);
             orderDetails.setWorkerRiderWorkflowStatus(PENDING_WORKER_APPROVAL);
 
@@ -103,7 +107,6 @@ public class OrdersService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
-                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
                 return null;
             });
@@ -113,16 +116,16 @@ public class OrdersService {
 
             CompletableFuture<Void> sendNotificationToWorker = getWorkerAndAdminDetails.thenApplyAsync((storeDetailsForWorkerUserIds) -> {
                 storeDetailsForWorkerUserIds.getShopWorkerIds().parallelStream().forEach(userId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
+                    UserDetails workerUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
+                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(workerUserDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
                 });
                 return null;
             });
 
             CompletableFuture<Void> sendNotificationToAdmin = getWorkerAndAdminDetails.thenApplyAsync((storeDetailsForAdminUserIds) -> {
                 storeDetailsForAdminUserIds.getShopAdminIds().parallelStream().forEach(userId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
+                    UserDetails adminUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
+                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(adminUserDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
                 });
                 return null;
             });
