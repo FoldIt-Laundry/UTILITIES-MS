@@ -18,6 +18,7 @@ import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueSe
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.user.model.UserDetails;
+import com.mongodb.client.result.UpdateResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,8 +62,6 @@ public class OrdersService {
     public OrdersService(@Autowired OrderOperationsInSlotQueueService orderIdService){
         this.orderOperationsInSlotQueue = orderIdService;
     }
-
-
 
 
     @Transactional(readOnly = true)
@@ -130,6 +129,7 @@ public class OrdersService {
             orderDetails.setUserWorkflowStatus(ORDER_PLACED);
             orderDetails.setWorkerRiderWorkflowStatus(PENDING_WORKER_APPROVAL);
 
+            // Save order details in DB
             CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
                 OrderDetails updatedOrderDetails = iOrderDetails.save(orderDetails);
                 orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails, negotiationConfigHolder, PICKUP);

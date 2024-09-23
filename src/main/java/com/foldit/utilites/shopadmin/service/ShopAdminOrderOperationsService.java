@@ -73,16 +73,21 @@ public class ShopAdminOrderOperationsService {
                     where("_id").is(addOrderQuantityRequest.getOrderId()));
             Update update = new Update()
                     .set("billDetails", billDetails);
-            UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
 
-            if (updateResult.getModifiedCount() != 1) {
-                String errorMessage = String.format("addOrderQuantityDetails(): No records gets updated for the query: %s and update: %s and payload: %s", toJson(query), toJson(update), toJson(addOrderQuantityRequest));
-                LOGGER.error(errorMessage);
-                throw new RecordsValidationException(errorMessage);
-            }
+
+            // Add order quantity details
+            CompletableFuture<Void> addOrderQuantityDetails = CompletableFuture.supplyAsync(() -> {
+                UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+                if (updateResult.getModifiedCount() != 1) {
+                    String errorMessage = String.format("addOrderQuantityDetails(): No records gets updated for the query: %s and update: %s and payload: %s", toJson(query), toJson(update), toJson(addOrderQuantityRequest));
+                    LOGGER.error(errorMessage);
+                    throw new RecordsValidationException(errorMessage);
+                }
+                return  null;
+            });
 
             // Send notification to user
-            CompletableFuture<Void> sendNotificationToUser = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToUser = addOrderQuantityDetails.thenApplyAsync((Void) -> {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(addOrderQuantityRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, String.format(USER_UPDATE_ORDER_QUANTITY_DETAILS_UPDATED, billDetails.getFinalPrice())));

@@ -104,35 +104,38 @@ public class WorkerActionService {
                     .set("workerRiderWorkflowStatus", ASSIGNED_FOR_RIDER_PICKUP)
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(approveOrderRequest.getWorkerId(), ORDER_PLACED + " " + PENDING_WORKER_APPROVAL, istTime.toLocalDateTime(), ACCEPTED + " " + ASSIGNED_FOR_RIDER_PICKUP));
 
-            UpdateResult updateResult =  mongoTemplate.updateFirst(query, update, OrderDetails.class);
 
-            if(updateResult.getModifiedCount()!=1) {
-                String errorMessage = String.format("approvePendingOrder(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
-                LOGGER.error(errorMessage);
-                throw new RecordsValidationException(errorMessage);
-            }
+
+            // Approve pending order
+            CompletableFuture<Void> approvePendingOrder = CompletableFuture.supplyAsync(() -> {
+                UpdateResult updateResult =  mongoTemplate.updateFirst(query, update, OrderDetails.class);
+                if(updateResult.getModifiedCount()!=1) {
+                    String errorMessage = String.format("approvePendingOrder(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
+                    LOGGER.error(errorMessage);
+                    throw new RecordsValidationException(errorMessage);
+                }
+                return  null;
+            });
 
             // Send notification to user
-            CompletableFuture<Void> sendNotificationToUser = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToUser = approvePendingOrder.thenApplyAsync((Void) -> {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(approveOrderRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_ACCEPTED));
                 return null;
             });
 
-            // Send notification to rider and admin
-            CompletableFuture<StoreDetails> getRiderAndAdminUserIdsFromStoreDetails = CompletableFuture.supplyAsync(() -> iStoreDetails.getRiderAndShopAdminIds(approveOrderRequest.getStoreId()));
 
-            CompletableFuture<Void> sendNotificationToWorker = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForWorkerUserIds) -> {
-                storeDetailsForWorkerUserIds.getShopRiderIds().parallelStream().forEach(userId -> {
+            CompletableFuture<Void> sendNotificationToWorker = approvePendingOrder.thenApplyAsync((Voidd) -> {
+                shopConfigurationHolder.getStoreRiderIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, RIDER_ORDER_ASSIGNED_FOR_PICKUP));
                 });
                 return null;
             });
 
-            CompletableFuture<Void> sendNotificationToAdmin = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForAdminUserIds) -> {
-                storeDetailsForAdminUserIds.getShopAdminIds().parallelStream().forEach(userId -> {
+            CompletableFuture<Void> sendNotificationToAdmin = approvePendingOrder.thenApplyAsync((Voiddd) -> {
+                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_ACCEPTED_REQUEST_UPDATE));
                 });
@@ -155,9 +158,9 @@ public class WorkerActionService {
     public void markWorkInProgress(String authToken, MarkWorkInProgressRequest markWorkInProgressRequest) {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, markWorkInProgressRequest.getWorkerId());
-            StoreDetails storeDetails = iStoreDetails.getShopIdWhichWorkerIsPartOf(Collections.singletonList(markWorkInProgressRequest.getWorkerId()));
-            if (storeDetails.getId().equalsIgnoreCase(markWorkInProgressRequest.getStoreId())) {
-                String errorMessage = String.format("markWorkInProgress(): Given workerId: %s is not entitled to mark any order status for the storeId: %s, It is entitled to authorize for the store: %s", markWorkInProgressRequest.getWorkerId(), markWorkInProgressRequest.getStoreId(), storeDetails.getId());
+            String storeId = negotiationConfigHolder.getDefaultShopId();
+            if (!shopConfigurationHolder.getStoreWorkerIds().contains(markWorkInProgressRequest.getWorkerId())) {
+                String errorMessage = String.format("markWorkInProgress(): Given workerId: %s is not entitled to mark any order status for the storeId: %s", markWorkInProgressRequest.getWorkerId(), storeId);
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
@@ -171,16 +174,21 @@ public class WorkerActionService {
                     .set("workerRiderWorkflowStatus", IN_STORE)
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(markWorkInProgressRequest.getWorkerId(), ACCEPTED + " " + ORDER_PICKED_UP, istTime.toLocalDateTime(), MAGIC_IN_PROGRESS + " " + IN_STORE));
 
-            UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
 
-            if (updateResult.getModifiedCount() != 1) {
-                String errorMessage = String.format("markWorkInProgress(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
-                LOGGER.error(errorMessage);
-                throw new RecordsValidationException(errorMessage);
-            }
+
+            // Mark work in progress
+            CompletableFuture<Void> markOrderWorkInProgress = CompletableFuture.supplyAsync(() -> {
+                UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+                if (updateResult.getModifiedCount() != 1) {
+                    String errorMessage = String.format("markWorkInProgress(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
+                    LOGGER.error(errorMessage);
+                    throw new RecordsValidationException(errorMessage);
+                }
+                return  null;
+            });
 
             // Send notification to user
-            CompletableFuture<Void> sendNotificationToUser = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToUser = markOrderWorkInProgress.thenApplyAsync((Void) -> {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(markWorkInProgressRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_MAGIC_IN_PROGRESS));
@@ -188,9 +196,8 @@ public class WorkerActionService {
             });
 
             // Send notification to Admin
-            CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
-                StoreDetails shopWorkerAdminIds = iStoreDetails.getShopAdminIds(markWorkInProgressRequest.getStoreId());
-                shopWorkerAdminIds.getShopAdminIds().parallelStream().forEach(userId -> {
+            CompletableFuture<Void> sendNotificationToAdmin = markOrderWorkInProgress.thenApplyAsync((Voidd) -> {
+                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_WORK_IN_PROGRESS_REQUEST_UPDATE));
                 });
@@ -211,9 +218,9 @@ public class WorkerActionService {
     public void markOrderReadyForDelivery(String authToken, MarkOrderReadyForDeliveryRequest markOrderReadyForDeliveryRequest) {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, markOrderReadyForDeliveryRequest.getWorkerId());
-            StoreDetails storeDetails = iStoreDetails.getShopIdWhichWorkerIsPartOf(Collections.singletonList(markOrderReadyForDeliveryRequest.getWorkerId()));
-            if (storeDetails.getId().equalsIgnoreCase(markOrderReadyForDeliveryRequest.getStoreId())) {
-                String errorMessage = String.format("markOrderReadyForDelivery(): Given workerId: %s is not entitled to mark any order status for the storeId: %s, It is entitled to authorize for the store: %s", markOrderReadyForDeliveryRequest.getWorkerId(), markOrderReadyForDeliveryRequest.getStoreId(), storeDetails.getId());
+            String storeId = negotiationConfigHolder.getDefaultShopId();
+            if (!shopConfigurationHolder.getStoreWorkerIds().contains(markOrderReadyForDeliveryRequest.getWorkerId())) {
+                String errorMessage = String.format("markWorkInProgress(): Given workerId: %s is not entitled to mark any order status for the storeId: %s", markOrderReadyForDeliveryRequest.getWorkerId(), storeId);
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
@@ -230,20 +237,22 @@ public class WorkerActionService {
                     .set("workerRiderWorkflowStatus", READY_FOR_DELIVERY)
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(markOrderReadyForDeliveryRequest.getWorkerId(), MAGIC_IN_PROGRESS + " " + IN_STORE, istTime.toLocalDateTime(), READY_FOR_DELIVERY + " " + READY_FOR_DELIVERY));
 
-            UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
-            orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(orderDetails, negotiationConfigHolder, DROP);
 
-            if (updateResult.getModifiedCount() != 1) {
-                String errorMessage = String.format("markOrderReadyForDelivery(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
-                LOGGER.error(errorMessage);
-                throw new RecordsValidationException(errorMessage);
-            }
+            // Mark Order Ready For Delivery
+            CompletableFuture<Void> markOrderReadyForDelivery = CompletableFuture.supplyAsync(() -> {
+                UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+                if (updateResult.getModifiedCount() != 1) {
+                    String errorMessage = String.format("markOrderReadyForDelivery(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
+                    LOGGER.error(errorMessage);
+                    throw new RecordsValidationException(errorMessage);
+                }
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(orderDetails, negotiationConfigHolder, DROP);
+                return  null;
+            });
 
-            // Get rider and admin user ids
-            CompletableFuture<StoreDetails> getRiderAndAdminUserIdsFromStoreDetails = CompletableFuture.supplyAsync(() -> iStoreDetails.getRiderAndShopAdminIds(markOrderReadyForDeliveryRequest.getStoreId()));
 
             // Send notification to worker
-            CompletableFuture<Void> sendNotificationToRider = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForWorkerUserIds) -> {
+            CompletableFuture<Void> sendNotificationToRider = markOrderReadyForDelivery.thenApplyAsync((Void) -> {
                 shopConfigurationHolder.getStoreRiderIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, RIDER_ORDER_READY_FOR_DELIVERY));
@@ -252,7 +261,7 @@ public class WorkerActionService {
             });
 
             // Send notification to admin
-            CompletableFuture<Void> sendNotificationToAdmin = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForAdminUserIds) -> {
+            CompletableFuture<Void> sendNotificationToAdmin = markOrderReadyForDelivery.thenApplyAsync((Voidd) -> {
                 shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_READY_FOR_DELIVERY));

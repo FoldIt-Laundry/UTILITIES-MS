@@ -1,12 +1,13 @@
 1) Need to optimize the local cache wali thing and completable future wala concept
 2) Api to reschedule or cancel the order
+3) Need to fix the slot generator
+4) Rider ke lie slots ka
 
 
 
 
 
-
-Rider is going for a rider and in between a admin changes the order that should not be allowed at any given time ? or locking at db level 
+Rider is going for a rider and in between a admin changes the order that should not be allowed at any given time ? or locking at db level
 
 
 
