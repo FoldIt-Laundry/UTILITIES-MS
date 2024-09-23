@@ -1,5 +1,6 @@
 package com.foldit.utilites.redisdboperation.service;
 
+import com.foldit.utilites.exception.RedisDBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,23 @@ public class DatabaseOperationsService {
             LOGGER.error("addOrderIdInBatchSlot(): Exception occurred while adding orderId: {} in given batch slot", orderId, slotDate+slotTime);
         }
         return 0L;
+    }
+
+    public String removeAndGetTheFirstOrderIdInBatchSlot(String slotDate, String slotTime) {
+        try {
+            String keyForBatch = slotDate+slotTime;
+            String value = (String) redisTemplate.opsForList().leftPop(keyForBatch);
+            if(value == null) {
+                if(redisTemplate.opsForList().size(keyForBatch)==0) return "";
+                String errorMessage = String.format("removeAndGetTheFirstOrderIdInBatchSlot(): Value exists in list for key: %s but db does not return anything", keyForBatch);
+                LOGGER.error(errorMessage);
+                throw new RedisDBException(errorMessage);
+            }
+            return value;
+        } catch (Exception ex) {
+            LOGGER.error("removeAndGetTheFirstOrderIdInBatchSlot(): Exception occurred while deleting and getting the first orderId for given batch slot key: {}, Exception: {}", slotDate+slotTime, ex.getMessage());
+            return "";
+        }
     }
 
 }

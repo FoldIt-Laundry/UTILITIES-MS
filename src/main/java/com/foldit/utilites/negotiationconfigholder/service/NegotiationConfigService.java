@@ -24,6 +24,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
+import static com.foldit.utilites.helper.ValidateTheDateFormat.validateTheDateFormat;
 import static com.foldit.utilites.negotiationconfigholder.constant.NegotiationConstant.*;
 
 @Service
@@ -106,13 +107,7 @@ public class NegotiationConfigService {
         if(StringUtils.isBlank(request.lastDateToShowOldSlotsTimings())) return false;
         if(request.oldTimeSlotsBatchSizeInHourDifference()<0 || request.newTimeSlotsBatchSizeInHourDifference()<0) return false;
         if(request.oldTimeSlotsBatchSizeInHourDifference()>3 || request.newTimeSlotsBatchSizeInHourDifference()>3) return false;
-
-        ZonedDateTime istTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-        LocalDate currentDate = istTime.toLocalDate();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate input = LocalDate.parse(request.lastDateToShowOldSlotsTimings(),formatter);
-        if(input.isBefore(currentDate)) return  false;
-
+        if(!validateTheDateFormat(request.lastDateToShowOldSlotsTimings())) return false;
         return true;
     }
 

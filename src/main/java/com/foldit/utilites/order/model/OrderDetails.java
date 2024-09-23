@@ -1,11 +1,13 @@
 package com.foldit.utilites.order.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
 import static com.foldit.utilites.helper.GenerateOtp.generate4DigitOtpCode;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Document(collection = "OrderDetails")
 public class OrderDetails {
     private String id;

@@ -27,7 +27,7 @@ public class ShopConfigurationHolder {
 
     @PostConstruct
     public void populateConfigurations() {
-        StoreDetails storeDetails = iStoreDetails.getShopAdminWorkerRiderIds(negotiationConfigHolder.getDefaultShopId());
+        StoreDetails storeDetails = iStoreDetails.findById(negotiationConfigHolder.getDefaultShopId()).get();
         storeAdminIds = storeDetails.getShopAdminIds();
         storeRiderIds = storeDetails.getShopRiderIds();
         storeWorkerIds = storeDetails.getShopWorkerIds();

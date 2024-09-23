@@ -13,7 +13,8 @@ import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.redisdboperation.service.OrderIdAdditionInSlotQueueService;
+import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
+import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.user.model.UserDetails;
@@ -54,10 +55,10 @@ public class OrdersService {
     @Autowired
     private IStoreDetails iStoreDetails;
 
-    private OrderIdAdditionInSlotQueueService orderIdAdditionInSlotQueueService;
+    private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
 
-    public OrdersService(@Autowired OrderIdAdditionInSlotQueueService orderIdService){
-        this.orderIdAdditionInSlotQueueService = orderIdService;
+    public OrdersService(@Autowired OrderOperationsInSlotQueueService orderIdService){
+        this.orderOperationsInSlotQueue = orderIdService;
     }
 
 
@@ -115,14 +116,13 @@ public class OrdersService {
         try {
 
             validateAuthToken(orderDetails.getUserId(), authToken);
-
-            UserDetails userDetails = iUserDetails.findById(orderDetails.getUserId()).get();
-
             if(!verifyTheInputSlotsAndTimings(orderDetails)) {
                 String errorMessage = String.format("placeOrder(): Given slot date: %s and time: %s is not supported by system. Please provide correct slots and timings", orderDetails.getBatchSlotTimingsDate(), orderDetails.getBatchSlotTimingsTime());
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
+
+            UserDetails userDetails = iUserDetails.findById(orderDetails.getUserId()).get();
 
             orderDetails.setStoreId(negotiationConfigHolder.getDefaultShopId());
             orderDetails.setCheckOutOtp(userDetails.getCheckOutOtp());
@@ -131,7 +131,7 @@ public class OrdersService {
 
             CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
                 OrderDetails updatedOrderDetails = iOrderDetails.save(orderDetails);
-                orderIdAdditionInSlotQueueService.addOrderIdInAdditionInSlotQueue(orderDetails);
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails);
                 return updatedOrderDetails;
             });
 
@@ -142,7 +142,7 @@ public class OrdersService {
             });
 
             // Send notification to worker
-            CompletableFuture<Void> sendNotificationToWorker = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToWorker = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
                 shopConfigurationHolder.getStoreWorkerIds().parallelStream().forEach(userId -> {
                     UserDetails workerUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(workerUserDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
@@ -151,7 +151,7 @@ public class OrdersService {
             });
 
             // Send notification to admin
-            CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<Void> sendNotificationToAdmin = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
                 shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails adminUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(adminUserDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
@@ -159,7 +159,7 @@ public class OrdersService {
                 return null;
             });
 
-            return orderDetails;
+            return orderDetailsInsertedInDb.get();
         } catch (RecordsValidationException ex) {
             throw new AuthTokenValidationException(ex.getMessage());
         } catch (AuthTokenValidationException ex) {

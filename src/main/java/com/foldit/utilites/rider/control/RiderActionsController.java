@@ -25,12 +25,12 @@ public class RiderActionsController {
     @Autowired
     private RiderActionsService riderActionsService;
 
-    @GetMapping("/rider/getNextPickUpOrderDetails")
-    public ResponseEntity<List<OrderDetails>> getNextPickUpOrderDetails(@RequestHeader(value="authToken") String authToken, @RequestParam("riderId") String riderId) {
-        List<OrderDetails> orderDetails = null;
+    @PostMapping("/rider/getNextPickUpOrderDetails")
+    public ResponseEntity<List<OrderDetails>> getNextPickUpOrderDetails(@RequestHeader(value="authToken") String authToken,@RequestBody NextPickUpOrderDetailsRequest nextPickUpOrderRequest) {
+        List<OrderDetails> orderDetails;
         try {
-            LOGGER.info("getNextPickUpOrderDetails(): Get all next pickup order details for riderId: {} and authToken: {}", riderId, authToken);
-            // orderDetails = riderActionsService(authToken, riderId);
+            LOGGER.info("getNextPickUpOrderDetails(): Get all next pickup order details for request: {} and authToken: {}", toJson(nextPickUpOrderRequest), authToken);
+            orderDetails = riderActionsService.getNextPickUpOrderDetails(authToken, nextPickUpOrderRequest);
             return new ResponseEntity<>(orderDetails, HttpStatus.OK);
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

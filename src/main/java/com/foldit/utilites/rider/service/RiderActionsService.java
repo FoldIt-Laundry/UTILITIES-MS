@@ -12,13 +12,16 @@ import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
+import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
 import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
+import com.foldit.utilites.rider.model.NextPickUpOrderDetailsRequest;
 import com.foldit.utilites.rider.model.OrderDeliveredRequest;
 import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import com.foldit.utilites.user.model.UserDetails;
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
+import static com.foldit.utilites.helper.ValidateTheDateFormat.validateTheDateFormat;
 import static com.foldit.utilites.order.model.WorkflowStatus.*;
 
 @Service
@@ -58,6 +64,28 @@ public class RiderActionsService {
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private TokenValidationService tokenValidationService;
+    @Autowired
+    private OrderOperationsInSlotQueueService inSlotQueueService;
+
+
+    @Transactional
+    public List<OrderDetails> getNextPickUpOrderDetails(String authToken, NextPickUpOrderDetailsRequest pickUpOrderRequest) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, pickUpOrderRequest.getRiderId());
+            if(!shopConfigurationHolder.getStoreRiderIds().contains(pickUpOrderRequest.getRiderId()) || !validateTheDateFormat(pickUpOrderRequest.getBatchSlotTimingsDate())) {
+                LOGGER.error("getNextPickUpOrderDetails(): Validation failed for given request: {} and available riderIds is: {}", toJson(shopConfigurationHolder), toJson(shopConfigurationHolder.getStoreRiderIds()));
+                throw new AuthTokenValidationException(null);
+            }
+            String orderId = inSlotQueueService.removeAndGetFirstOrderIdFromSlotQueue(pickUpOrderRequest);
+            if(StringUtils.isNotBlank(orderId)) return Arrays.asList(iOrderDetails.findById(orderId).get());
+            return new ArrayList<>();
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getNextPickUpOrderDetails(): Exception occurred while performing read and write operation for requets: {} and authToken: {} from monogoDb, Exception: {}", toJson(pickUpOrderRequest), authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
 
     @Transactional(readOnly = true)
     public List<OrderDetails> getAllPickUpOrderDetails(String authToken, String riderId) {
