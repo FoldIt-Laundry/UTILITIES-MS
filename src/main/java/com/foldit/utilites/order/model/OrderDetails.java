@@ -22,8 +22,26 @@ public class OrderDetails {
     private CostStructure billDetails;
     private ScheduledTime scheduledTimings;
     private Double rating;
+    private String batchSlotTimingsDate;
+    private String batchSlotTimingsTime;
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp;
+
+    public String getBatchSlotTimingsDate() {
+        return batchSlotTimingsDate;
+    }
+
+    public void setBatchSlotTimingsDate(String batchSlotTimingsDate) {
+        this.batchSlotTimingsDate = batchSlotTimingsDate;
+    }
+
+    public String getBatchSlotTimingsTime() {
+        return batchSlotTimingsTime;
+    }
+
+    public void setBatchSlotTimingsTime(String batchSlotTimingsTime) {
+        this.batchSlotTimingsTime = batchSlotTimingsTime;
+    }
 
     public String getCheckOutOtp() {
         return checkOutOtp;

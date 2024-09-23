@@ -7,7 +7,7 @@ import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.store.model.DeliveryFeeCalculatorRequest;
 import com.foldit.utilites.store.model.StoreDetails;
-import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
+import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.user.model.DeliveryAndFeeDetails;
 import com.foldit.utilites.user.model.OnBoardNewUserLocation;
@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.foldit.utilites.helper.GoogleMatrixForDeliveryFee.calculateDeliveryFee;
 import static com.foldit.utilites.helper.GoogleMatrixForDeliveryFee.getDeliveryFeeAndDistanceDetails;
 
 @Service
@@ -37,7 +36,7 @@ public class UserActionsService {
     private static final Logger LOGGER =  LoggerFactory.getLogger(UserActionsService.class);
 
     @Autowired
-    private RedisTokenVerificationService redisTokenVerificationService;
+    private DatabaseOperationsService databaseOperationsService;
 
     @Autowired
     private IUserDetails iUserDetails;
@@ -53,7 +52,7 @@ public class UserActionsService {
     public OnBoardNewUserLocation saveNewUserLocation(OnBoardNewUserLocation onBoardNewUserLocation, String authToken) {
         UserLocation userLocation;
         try {
-            if(!redisTokenVerificationService.validateAuthToken(onBoardNewUserLocation.getUserId(), authToken)) {
+            if(!databaseOperationsService.validateAuthToken(onBoardNewUserLocation.getUserId(), authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }
@@ -81,7 +80,7 @@ public class UserActionsService {
     @Transactional(readOnly = true)
     public UserDetails getUserDetailsFromUserId(String authToken, String userId) {
         try {
-            if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+            if(!databaseOperationsService.validateAuthToken(userId, authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }
@@ -97,7 +96,7 @@ public class UserActionsService {
     @Transactional(readOnly = true)
     public List<UserLocation> getAllUserLocations(String authToken, String userId) {
         try {
-            if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+            if(!databaseOperationsService.validateAuthToken(userId, authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }

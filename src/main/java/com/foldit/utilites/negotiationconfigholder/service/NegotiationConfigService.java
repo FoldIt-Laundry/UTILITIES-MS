@@ -5,7 +5,7 @@ import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.model.ChangeBatchSlotTimingRequest;
 import com.foldit.utilites.negotiationconfigholder.model.Configuration;
-import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
+import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +31,7 @@ public class NegotiationConfigService {
     private static final Logger LOGGER =  LoggerFactory.getLogger(NegotiationConfigService.class);
 
     @Autowired
-    private RedisTokenVerificationService redisTokenVerificationService;
+    private DatabaseOperationsService databaseOperationsService;
     @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
     @Autowired
@@ -41,7 +40,7 @@ public class NegotiationConfigService {
     @Transactional
     public void  changeBatchSlotTimings(String authToken, String userRole, ChangeBatchSlotTimingRequest request) {
         try {
-            redisTokenVerificationService.validateAuthToken(request.userId(), authToken);
+            databaseOperationsService.validateAuthToken(request.userId(), authToken);
             if(!userRole.equalsIgnoreCase("SUPER_ADMIN") || !validationChangeBatchSlotTimingsRequest(request)) {
                 LOGGER.error("changeSlotsQuantityToShow(): Given userId is not super admin or validation failed for request: {} , supplied userId: {} and userRole: {}", request.userId(), toJson(request), userRole);
                 throw new AuthTokenValidationException(null);
@@ -65,7 +64,7 @@ public class NegotiationConfigService {
     @Transactional
     public void  changeSlotsQuantityToShow(String authToken,String userRole,Integer slotsQuantity,String userId) {
         try {
-            redisTokenVerificationService.validateAuthToken(userId, authToken);
+            databaseOperationsService.validateAuthToken(userId, authToken);
             if(!userRole.equalsIgnoreCase("SUPER_ADMIN") || slotsQuantity<5) {
                 LOGGER.error("changeSlotsQuantityToShow(): Given userId is not super admin, supplied userId: {} and userRole: {}", userId, userRole);
                 throw new AuthTokenValidationException(null);

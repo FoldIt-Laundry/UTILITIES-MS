@@ -5,25 +5,26 @@ import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.dao.IOrderDetails;
+import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
+import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.store.model.StoreDetails;
-import com.foldit.utilites.tokenverification.service.RedisTokenVerificationService;
+import com.foldit.utilites.redisdboperation.service.OrderIdAdditionInSlotQueueService;
+import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
+import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.user.model.UserDetails;
-import io.grpc.netty.shaded.io.netty.util.concurrent.CompleteFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
@@ -36,19 +37,30 @@ import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPR
 public class OrdersService {
 
     private static final Logger LOGGER =  LoggerFactory.getLogger(OrdersService.class);
-
     @Autowired
-    private RedisTokenVerificationService redisTokenVerificationService;
+    private DatabaseOperationsService databaseOperationsService;
     @Autowired
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
+    @Autowired
+    private SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup;
+    @Autowired
+    private ShopConfigurationHolder shopConfigurationHolder;
     @Autowired
     private IOrderDetails iOrderDetails;
     @Autowired
     private IUserDetails iUserDetails;
     @Autowired
     private IStoreDetails iStoreDetails;
+
+    private OrderIdAdditionInSlotQueueService orderIdAdditionInSlotQueueService;
+
+    public OrdersService(@Autowired OrderIdAdditionInSlotQueueService orderIdService){
+        this.orderIdAdditionInSlotQueueService = orderIdService;
+    }
+
+
 
 
     @Transactional(readOnly = true)
@@ -90,20 +102,38 @@ public class OrdersService {
         }
     }
 
+    boolean verifyTheInputSlotsAndTimings(OrderDetails orderDetails) {
+        Map<String,List<String>> slotTimingMap = slotsGeneratorForScheduledPickup.getTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
+        if(slotTimingMap.containsKey(orderDetails.getBatchSlotTimingsDate()) && slotTimingMap.get(orderDetails.getBatchSlotTimingsDate()).contains(orderDetails.getBatchSlotTimingsTime())) {
+            return true;
+        }
+        return false;
+    }
+
     @Transactional
     public OrderDetails placeOrder(String authToken, OrderDetails orderDetails) {
         try {
 
+            validateAuthToken(orderDetails.getUserId(), authToken);
+
             UserDetails userDetails = iUserDetails.findById(orderDetails.getUserId()).get();
 
-            validateAuthToken(orderDetails.getUserId(), authToken);
+            if(!verifyTheInputSlotsAndTimings(orderDetails)) {
+                String errorMessage = String.format("placeOrder(): Given slot date: %s and time: %s is not supported by system. Please provide correct slots and timings", orderDetails.getBatchSlotTimingsDate(), orderDetails.getBatchSlotTimingsTime());
+                LOGGER.error(errorMessage);
+                throw new RecordsValidationException(errorMessage);
+            }
+
             orderDetails.setStoreId(negotiationConfigHolder.getDefaultShopId());
             orderDetails.setCheckOutOtp(userDetails.getCheckOutOtp());
             orderDetails.setUserWorkflowStatus(ORDER_PLACED);
             orderDetails.setWorkerRiderWorkflowStatus(PENDING_WORKER_APPROVAL);
 
-            // Insert order in db
-            CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> iOrderDetails.save(orderDetails));
+            CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
+                OrderDetails updatedOrderDetails = iOrderDetails.save(orderDetails);
+                orderIdAdditionInSlotQueueService.addOrderIdInAdditionInSlotQueue(orderDetails);
+                return updatedOrderDetails;
+            });
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
@@ -111,27 +141,27 @@ public class OrdersService {
                 return null;
             });
 
-            // Send notification to worker and admin
-            CompletableFuture<StoreDetails> getWorkerAndAdminDetails = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> iStoreDetails.getWorkerAndShopAdminIds(negotiationConfigHolder.getDefaultShopId()));
-
-            CompletableFuture<Void> sendNotificationToWorker = getWorkerAndAdminDetails.thenApplyAsync((storeDetailsForWorkerUserIds) -> {
-                storeDetailsForWorkerUserIds.getShopWorkerIds().parallelStream().forEach(userId -> {
+            // Send notification to worker
+            CompletableFuture<Void> sendNotificationToWorker = CompletableFuture.supplyAsync(() -> {
+                shopConfigurationHolder.getStoreWorkerIds().parallelStream().forEach(userId -> {
                     UserDetails workerUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(workerUserDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
                 });
                 return null;
             });
 
-            CompletableFuture<Void> sendNotificationToAdmin = getWorkerAndAdminDetails.thenApplyAsync((storeDetailsForAdminUserIds) -> {
-                storeDetailsForAdminUserIds.getShopAdminIds().parallelStream().forEach(userId -> {
+            // Send notification to admin
+            CompletableFuture<Void> sendNotificationToAdmin = CompletableFuture.supplyAsync(() -> {
+                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails adminUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(adminUserDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
                 });
                 return null;
             });
 
-            CompletableFuture.allOf(orderDetailsInsertedInDb);
-            return orderDetailsInsertedInDb.join();
+            return orderDetails;
+        } catch (RecordsValidationException ex) {
+            throw new AuthTokenValidationException(ex.getMessage());
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
@@ -155,7 +185,7 @@ public class OrdersService {
     }
 
     private boolean validateAuthToken(String userId, String authToken) {
-        if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+        if(!databaseOperationsService.validateAuthToken(userId, authToken)) {
             LOGGER.error("Auth token: {}, Validation failed", authToken);
             throw new AuthTokenValidationException(null);
         }

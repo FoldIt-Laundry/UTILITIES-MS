@@ -1,4 +1,4 @@
-package com.foldit.utilites.tokenverification.interfaces;
+package com.foldit.utilites.redisdboperation.interfaces;
 
 public interface TokenValidation {
 

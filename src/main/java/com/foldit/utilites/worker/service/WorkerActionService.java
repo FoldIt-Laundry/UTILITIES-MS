@@ -12,7 +12,7 @@ import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
 import com.foldit.utilites.store.model.StoreDetails;
-import com.foldit.utilites.tokenverification.service.TokenValidationService;
+import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import com.foldit.utilites.user.model.UserDetails;
 import com.foldit.utilites.worker.model.ApproveOrderRequest;
 import com.foldit.utilites.worker.model.MarkOrderReadyForDeliveryRequest;

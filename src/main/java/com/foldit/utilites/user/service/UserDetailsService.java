@@ -1,8 +1,6 @@
 package com.foldit.utilites.user.service;
 
-import com.foldit.utilites.tokenverification.service.TokenValidationService;
-import com.foldit.utilites.user.control.UserDetailsController;
-import com.foldit.utilites.user.model.UserLocation;
+import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

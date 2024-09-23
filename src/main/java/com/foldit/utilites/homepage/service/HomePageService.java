@@ -4,7 +4,7 @@ import com.foldit.utilites.dao.IServiceOffered;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.homepage.model.ServiceAvailable;
 import com.foldit.utilites.homepage.model.Services;
-import com.foldit.utilites.tokenverification.service.TokenValidationService;
+import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

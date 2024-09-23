@@ -17,6 +17,8 @@ public class ShopConfigurationHolder {
     private List<String> storeAdminIds;
     private List<String> storeRiderIds;
     private List<String> storeWorkerIds;
+    private String shopOpeningTime;
+    private String shopClosingTime;
 
     @Autowired
     private IStoreDetails iStoreDetails;
@@ -29,6 +31,8 @@ public class ShopConfigurationHolder {
         storeAdminIds = storeDetails.getShopAdminIds();
         storeRiderIds = storeDetails.getShopRiderIds();
         storeWorkerIds = storeDetails.getShopWorkerIds();
+        shopOpeningTime = storeDetails.getOperatingHourStartTime();
+        shopClosingTime = storeDetails.getOperatingHourEndTime();
     }
 
     public void updateRiderIds() {
@@ -50,6 +54,14 @@ public class ShopConfigurationHolder {
         LOGGER.info("updateWorkerIds(): Request received to update the worker id for the shopId: {}", shopId);
         storeRiderIds = iStoreDetails.getShopWorkerIds(shopId).getShopWorkerIds();
         LOGGER.info("updateWorkerIds(): Riders Id has been updated successfully in db");
+    }
+
+    public String getShopOpeningTime() {
+        return shopOpeningTime;
+    }
+
+    public String getShopClosingTime() {
+        return shopClosingTime;
     }
 
     public List<String> getStoreAdminIds() {

@@ -16,7 +16,7 @@ import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
 import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
 import com.foldit.utilites.rider.model.OrderDeliveredRequest;
 import com.foldit.utilites.store.model.StoreDetails;
-import com.foldit.utilites.tokenverification.service.TokenValidationService;
+import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import com.foldit.utilites.user.model.UserDetails;
 import com.mongodb.client.result.UpdateResult;
 import org.slf4j.Logger;

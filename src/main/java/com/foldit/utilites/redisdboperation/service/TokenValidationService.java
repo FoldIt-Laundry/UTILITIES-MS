@@ -1,7 +1,7 @@
-package com.foldit.utilites.tokenverification.service;
+package com.foldit.utilites.redisdboperation.service;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
-import com.foldit.utilites.tokenverification.interfaces.TokenValidation;
+import com.foldit.utilites.redisdboperation.interfaces.TokenValidation;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,16 +13,16 @@ public class TokenValidationService implements TokenValidation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenValidationService.class);
     @Autowired
-    private RedisTokenVerificationService redisTokenVerificationService;
+    private DatabaseOperationsService databaseOperationsService;
 
     @Override
     public boolean authTokenValidationFromUserOrMobile(String authToken, String userId, String mobileNumber) {
         try {
             LOGGER.info("authTokenValidationFromUserOrMobile(): Request received to validate the auth token details: authToken: {}, userId: {}, mobileNumber: {}", authToken, userId, mobileNumber);
-            if (StringUtils.isNotBlank((userId)) && redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+            if (StringUtils.isNotBlank((userId)) && databaseOperationsService.validateAuthToken(userId, authToken)) {
                 return true;
             }
-            if (StringUtils.isNotBlank((mobileNumber)) && redisTokenVerificationService.validateAuthToken(mobileNumber, authToken)) {
+            if (StringUtils.isNotBlank((mobileNumber)) && databaseOperationsService.validateAuthToken(mobileNumber, authToken)) {
                 return true;
             }
             LOGGER.error("Auth token: {}, Validation failed", authToken);
@@ -36,7 +36,7 @@ public class TokenValidationService implements TokenValidation {
     @Override
     public boolean authTokenValidationFromUserId(String authToken, String userId) {
         try {
-            if(!redisTokenVerificationService.validateAuthToken(userId, authToken)) {
+            if(!databaseOperationsService.validateAuthToken(userId, authToken)) {
                 throw new AuthTokenValidationException(null);
             }
             return true;
