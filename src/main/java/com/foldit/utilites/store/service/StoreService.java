@@ -84,7 +84,7 @@ public class StoreService {
         AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, availableTimeSlotsRequest.getUserId(), availableTimeSlotsRequest.getMobileNumber());
-            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getTimeSlotsForScheduledPickUp(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
+            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickUp(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
@@ -99,7 +99,7 @@ public class StoreService {
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, userId, mobileNumber);
             StoreDetails storeDetails = iStoreDetails.getShopTimingsFromStoreId(negotiationConfigHolder.getDefaultShopId());
-            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getTimeSlotsForScheduledPickUp(storeDetails.getOperatingHourStartTime(), storeDetails.getOperatingHourEndTime()));
+            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickUp(storeDetails.getOperatingHourStartTime(), storeDetails.getOperatingHourEndTime()));
             return timeSlotsResponse;
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

@@ -32,6 +32,7 @@ import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.order.model.WorkflowStatus.ORDER_PLACED;
 import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPROVAL;
+import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
 
 
 @Service
@@ -104,7 +105,7 @@ public class OrdersService {
     }
 
     boolean verifyTheInputSlotsAndTimings(OrderDetails orderDetails) {
-        Map<String,List<String>> slotTimingMap = slotsGeneratorForScheduledPickup.getTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
+        Map<String,List<String>> slotTimingMap = slotsGeneratorForScheduledPickup.getUserTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
         if(slotTimingMap.containsKey(orderDetails.getBatchSlotTimingsDate()) && slotTimingMap.get(orderDetails.getBatchSlotTimingsDate()).contains(orderDetails.getBatchSlotTimingsTime())) {
             return true;
         }
@@ -131,7 +132,7 @@ public class OrdersService {
 
             CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
                 OrderDetails updatedOrderDetails = iOrderDetails.save(orderDetails);
-                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails);
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails, negotiationConfigHolder, PICKUP);
                 return updatedOrderDetails;
             });
 

@@ -21,7 +21,7 @@ public class SlotsGeneratorForScheduledPickup implements IGetTimeSlotsForSchedul
     private NegotiationConfigHolder negotiationConfigHolder;
 
     @Override
-    public Map<String, List<String>> getTimeSlotsForScheduledPickUp(String shopStartTime, String shopEndTime) {
+    public Map<String, List<String>> getUserTimeSlotsForScheduledPickUp(String shopStartTime, String shopEndTime) {
         Map<String, List<String>> schedule = new TreeMap<>();
         try {
             int maxSlotCountToReturn = negotiationConfigHolder.getTimeSlotQuantityToShow();

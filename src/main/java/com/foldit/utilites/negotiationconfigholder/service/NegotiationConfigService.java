@@ -18,13 +18,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
-import static com.foldit.utilites.helper.ValidateTheDateFormat.validateTheDateFormat;
+import static com.foldit.utilites.helper.DateOperations.validateTheDateFormat;
 import static com.foldit.utilites.negotiationconfigholder.constant.NegotiationConstant.*;
 
 @Service

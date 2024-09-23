@@ -12,10 +12,11 @@ import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
+import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
 import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
-import com.foldit.utilites.rider.model.NextPickUpOrderDetailsRequest;
+import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.OrderDeliveredRequest;
 import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
@@ -41,8 +42,10 @@ import java.util.concurrent.CompletableFuture;
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
-import static com.foldit.utilites.helper.ValidateTheDateFormat.validateTheDateFormat;
+import static com.foldit.utilites.helper.DateOperations.validateTheDateFormat;
 import static com.foldit.utilites.order.model.WorkflowStatus.*;
+import static com.foldit.utilites.rider.model.RiderDeliveryTask.DROP;
+import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
 
 @Service
 public class RiderActionsService {
@@ -64,25 +67,46 @@ public class RiderActionsService {
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private TokenValidationService tokenValidationService;
-    @Autowired
-    private OrderOperationsInSlotQueueService inSlotQueueService;
+    private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
 
+    public RiderActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService){
+        this.orderOperationsInSlotQueue = orderIdService;
+    }
 
     @Transactional
-    public List<OrderDetails> getNextPickUpOrderDetails(String authToken, NextPickUpOrderDetailsRequest pickUpOrderRequest) {
+    public List<OrderDetails> getNextPickUpOrderDetails(String authToken, NextPickUpDropOrderDetailsRequest pickUpOrderRequest) {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, pickUpOrderRequest.getRiderId());
             if(!shopConfigurationHolder.getStoreRiderIds().contains(pickUpOrderRequest.getRiderId()) || !validateTheDateFormat(pickUpOrderRequest.getBatchSlotTimingsDate())) {
                 LOGGER.error("getNextPickUpOrderDetails(): Validation failed for given request: {} and available riderIds is: {}", toJson(shopConfigurationHolder), toJson(shopConfigurationHolder.getStoreRiderIds()));
                 throw new AuthTokenValidationException(null);
             }
-            String orderId = inSlotQueueService.removeAndGetFirstOrderIdFromSlotQueue(pickUpOrderRequest);
+            String orderId = orderOperationsInSlotQueue.removeAndGetFirstOrderIdFromSlotQueue(pickUpOrderRequest, negotiationConfigHolder, PICKUP);
             if(StringUtils.isNotBlank(orderId)) return Arrays.asList(iOrderDetails.findById(orderId).get());
             return new ArrayList<>();
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
-            LOGGER.error("getNextPickUpOrderDetails(): Exception occurred while performing read and write operation for requets: {} and authToken: {} from monogoDb, Exception: {}", toJson(pickUpOrderRequest), authToken, ex.getMessage());
+            LOGGER.error("getNextPickUpOrderDetails(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: {}", toJson(pickUpOrderRequest), authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+    @Transactional
+    public List<OrderDetails> getNextDropOrderDetails(String authToken, NextPickUpDropOrderDetailsRequest dropOrderRequest) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, dropOrderRequest.getRiderId());
+            if(!shopConfigurationHolder.getStoreRiderIds().contains(dropOrderRequest.getRiderId()) || !validateTheDateFormat(dropOrderRequest.getBatchSlotTimingsDate())) {
+                LOGGER.error("getNextDropOrderDetails(): Validation failed for given request: {} and available riderIds is: {}", toJson(shopConfigurationHolder), toJson(shopConfigurationHolder.getStoreRiderIds()));
+                throw new AuthTokenValidationException(null);
+            }
+            String orderId = orderOperationsInSlotQueue.removeAndGetFirstOrderIdFromSlotQueue(dropOrderRequest, negotiationConfigHolder, DROP);
+            if(StringUtils.isNotBlank(orderId)) return Arrays.asList(iOrderDetails.findById(orderId).get());
+            return new ArrayList<>();
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getNextDropOrderDetails(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: {}", toJson(dropOrderRequest), authToken, ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }

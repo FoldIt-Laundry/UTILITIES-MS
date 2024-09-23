@@ -9,8 +9,11 @@ import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
+import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
+import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
+import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.store.model.StoreDetails;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import com.foldit.utilites.user.model.UserDetails;
@@ -37,6 +40,8 @@ import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.order.model.WorkflowStatus.*;
+import static com.foldit.utilites.rider.model.RiderDeliveryTask.DROP;
+import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
 
 @Service
 public class WorkerActionService {
@@ -54,9 +59,16 @@ public class WorkerActionService {
     @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
     @Autowired
+    private ShopConfigurationHolder shopConfigurationHolder;
+    @Autowired
     private FireBaseMessageSenderService fireBaseMessageSenderService;
     @Autowired
     private TokenValidationService tokenValidationService;
+    private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
+
+    public WorkerActionService(@Autowired OrderOperationsInSlotQueueService orderIdService){
+        this.orderOperationsInSlotQueue = orderIdService;
+    }
 
     @Transactional(readOnly = true)
     public List<OrderDetails> getAllUnApprovedOrderList(String workedId, String authToken) {
@@ -205,6 +217,9 @@ public class WorkerActionService {
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
+
+            OrderDetails orderDetails = iOrderDetails.findById(markOrderReadyForDeliveryRequest.getOrderId()).get();
+
             Query query = new Query(Criteria.
                     where("_id").is(markOrderReadyForDeliveryRequest.getOrderId())
                     .where("storeId").is(markOrderReadyForDeliveryRequest.getStoreId())
@@ -216,6 +231,7 @@ public class WorkerActionService {
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(markOrderReadyForDeliveryRequest.getWorkerId(), MAGIC_IN_PROGRESS + " " + IN_STORE, istTime.toLocalDateTime(), READY_FOR_DELIVERY + " " + READY_FOR_DELIVERY));
 
             UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+            orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(orderDetails, negotiationConfigHolder, DROP);
 
             if (updateResult.getModifiedCount() != 1) {
                 String errorMessage = String.format("markOrderReadyForDelivery(): No records gets updated for the query: %s and update: %s", toJson(query), toJson(update));
@@ -228,7 +244,7 @@ public class WorkerActionService {
 
             // Send notification to worker
             CompletableFuture<Void> sendNotificationToRider = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForWorkerUserIds) -> {
-                storeDetailsForWorkerUserIds.getShopRiderIds().parallelStream().forEach(userId -> {
+                shopConfigurationHolder.getStoreRiderIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, RIDER_ORDER_READY_FOR_DELIVERY));
                 });
@@ -237,7 +253,7 @@ public class WorkerActionService {
 
             // Send notification to admin
             CompletableFuture<Void> sendNotificationToAdmin = getRiderAndAdminUserIdsFromStoreDetails.thenApplyAsync((storeDetailsForAdminUserIds) -> {
-                storeDetailsForAdminUserIds.getShopAdminIds().parallelStream().forEach(userId -> {
+                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
                     UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_READY_FOR_DELIVERY));
                 });

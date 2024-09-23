@@ -1,17 +1,17 @@
+1) Need to optimize the local cache wali thing and completable future wala concept
+2) Api to reschedule or cancel the order
 
 
-0) Admin to get the all orders data ( Batch Size ( Pickup/Drop (1,2,3,4,5) ) )
-1) Batch size configuation needs to make an api ( Configuration  )
-2) Post api to change the batch size
-3) Default order for pickup/drop ( FIFO )
-    <------->
-4) Admin (   10 1 2 3 4 5 6  8 9  11 12  ) REDIS CACHE
 
 
-OTP :-
 
 
--- Slots quantity threshold to set ?
+Rider is going for a rider and in between a admin changes the order that should not be allowed at any given time ? or locking at db level 
+
+
+
+
+
 
 -- Version
 -- Name api first time

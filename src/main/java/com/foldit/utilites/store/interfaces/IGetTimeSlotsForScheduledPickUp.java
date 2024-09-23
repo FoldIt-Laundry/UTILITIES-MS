@@ -5,6 +5,6 @@ import java.util.Map;
 
 public interface IGetTimeSlotsForScheduledPickUp {
 
-    Map<String, List<String>> getTimeSlotsForScheduledPickUp(String shopStartTime, String shopEndTime);
+    Map<String, List<String>> getUserTimeSlotsForScheduledPickUp(String shopStartTime, String shopEndTime);
 
 }

@@ -5,7 +5,6 @@ import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.rider.service.RiderActionsService;
-import com.foldit.utilites.worker.controller.WorkerActionController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +25,25 @@ public class RiderActionsController {
     private RiderActionsService riderActionsService;
 
     @PostMapping("/rider/getNextPickUpOrderDetails")
-    public ResponseEntity<List<OrderDetails>> getNextPickUpOrderDetails(@RequestHeader(value="authToken") String authToken,@RequestBody NextPickUpOrderDetailsRequest nextPickUpOrderRequest) {
+    public ResponseEntity<List<OrderDetails>> getNextPickUpOrderDetails(@RequestHeader(value="authToken") String authToken,@RequestBody NextPickUpDropOrderDetailsRequest nextPickUpOrderRequest) {
         List<OrderDetails> orderDetails;
         try {
-            LOGGER.info("getNextPickUpOrderDetails(): Get all next pickup order details for request: {} and authToken: {}", toJson(nextPickUpOrderRequest), authToken);
+            LOGGER.info("getNextPickUpOrderDetails(): Get next pickup order details for request: {} and authToken: {}", toJson(nextPickUpOrderRequest), authToken);
             orderDetails = riderActionsService.getNextPickUpOrderDetails(authToken, nextPickUpOrderRequest);
+            return new ResponseEntity<>(orderDetails, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
+    @PostMapping("/rider/getNextDropOrderDetails")
+    public ResponseEntity<List<OrderDetails>> getNextDropOrderDetails(@RequestHeader(value="authToken") String authToken,@RequestBody NextPickUpDropOrderDetailsRequest nextDropOrderRequest) {
+        List<OrderDetails> orderDetails;
+        try {
+            LOGGER.info("getNextPickUpOrderDetails(): Get next drop order details for request: {} and authToken: {}", toJson(nextDropOrderRequest), authToken);
+            orderDetails = riderActionsService.getNextDropOrderDetails(authToken, nextDropOrderRequest);
             return new ResponseEntity<>(orderDetails, HttpStatus.OK);
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

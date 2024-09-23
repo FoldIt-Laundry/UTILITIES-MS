@@ -1,6 +1,6 @@
 package com.foldit.utilites.rider.model;
 
-public class NextPickUpOrderDetailsRequest {
+public class NextPickUpDropOrderDetailsRequest {
     private String riderId;
     private String batchSlotTimingsDate;
     private String batchSlotTimingsTime;
