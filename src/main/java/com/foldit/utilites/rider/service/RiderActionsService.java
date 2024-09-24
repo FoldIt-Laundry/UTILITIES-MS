@@ -37,7 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -85,7 +84,7 @@ public class RiderActionsService {
                 LOGGER.error("getNextPickUpOrderDetails(): Validation failed for given request: {} and available riderIds is: {}", toJson(shopConfigurationHolder), toJson(shopConfigurationHolder.getStoreRiderIds()));
                 throw new AuthTokenValidationException(null);
             }
-            String orderId = orderOperationsInSlotQueue.removeAndGetFirstOrderIdFromSlotQueue(pickUpOrderRequest, negotiationConfigHolder, PICKUP);
+            String orderId = orderOperationsInSlotQueue.getFirstOrderIdFromSlotQueue(pickUpOrderRequest, PICKUP);
             if(StringUtils.isNotBlank(orderId)) return Arrays.asList(iOrderDetails.findById(orderId).get());
             return new ArrayList<>();
         } catch (AuthTokenValidationException ex) {
@@ -104,7 +103,7 @@ public class RiderActionsService {
                 LOGGER.error("getNextDropOrderDetails(): Validation failed for given request: {} and available riderIds is: {}", toJson(shopConfigurationHolder), toJson(shopConfigurationHolder.getStoreRiderIds()));
                 throw new AuthTokenValidationException(null);
             }
-            String orderId = orderOperationsInSlotQueue.removeAndGetFirstOrderIdFromSlotQueue(dropOrderRequest, negotiationConfigHolder, DROP);
+            String orderId = orderOperationsInSlotQueue.getFirstOrderIdFromSlotQueue(dropOrderRequest, DROP);
             if(StringUtils.isNotBlank(orderId)) return Arrays.asList(iOrderDetails.findById(orderId).get());
             return new ArrayList<>();
         } catch (AuthTokenValidationException ex) {

@@ -6,6 +6,7 @@ import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
+import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,10 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
     private DatabaseOperationsService databaseOperationsService;
 
     @Override
-    public void addOrderIdInAdditionInSlotQueue(OrderDetails orderDetails, NegotiationConfigHolder negotiationConfigHolder, RiderDeliveryTask riderDeliveryTask) {
+    public void addOrderIdInAdditionInSlotQueue(OrderDetails orderDetails, RiderDeliveryTask riderDeliveryTask) {
         String keyForBatch;
         try {
-            keyForBatch = getKeyForBatchSize(negotiationConfigHolder, orderDetails.getBatchSlotTimingsDate(), orderDetails.getBatchSlotTimingsTime());
+            keyForBatch = orderDetails.getBatchSlotTimingsDate()+orderDetails.getBatchSlotTimingsTime();
             LOGGER.info("addOrderIdInAdditionInSlotQueue(): Initiating request to add orderId: {} in batchSlot: {} and riderDeliveryTask: {}", orderDetails.getId(), keyForBatch, riderDeliveryTask);
             Long rowsAffected = databaseOperationsService.addOrderIdInBatchSlot(orderDetails.getId(), keyForBatch, riderDeliveryTask);
             if(rowsAffected==null || rowsAffected==0) {
@@ -37,23 +38,38 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
     }
 
     @Override
-    public String removeAndGetFirstOrderIdFromSlotQueue(NextPickUpDropOrderDetailsRequest pickUpOrderRequest, NegotiationConfigHolder negotiationConfigHolder, RiderDeliveryTask riderDeliveryTask) {
+    public String getFirstOrderIdFromSlotQueue(NextPickUpDropOrderDetailsRequest pickUpOrderRequest, RiderDeliveryTask riderDeliveryTask) {
         String keyForBatch;
         String orderId;
         try {
-            keyForBatch = getKeyForBatchSize(negotiationConfigHolder, pickUpOrderRequest.getBatchSlotTimingsDate(), pickUpOrderRequest.getBatchSlotTimingsTime());
+            keyForBatch = pickUpOrderRequest.getBatchSlotTimingsDate()+ pickUpOrderRequest.getBatchSlotTimingsTime();
             LOGGER.info("removeAndGetFirstOrderIdFromSlotQueue(): Initiating request to remove and get first orderId for batchKey: {} and riderDeliveryTask: {}", keyForBatch, riderDeliveryTask);
-            orderId = databaseOperationsService.removeAndGetTheFirstOrderIdInBatchSlot(keyForBatch, riderDeliveryTask);
+            orderId = databaseOperationsService.getTheFirstOrderIdInBatchSlot(keyForBatch, riderDeliveryTask);
             return orderId;
         } catch (Exception ex) {
             throw new RedisDBException(ex.getMessage());
         }
     }
 
-
-    private String getKeyForBatchSize(NegotiationConfigHolder negotiationConfigHolder, String slotDate, String slotTime) {
-        int batchSizeForSlotsMapping = batchSizeForSlotsMapping(negotiationConfigHolder, slotDate);
-        if(batchSizeForSlotsMapping==0) return slotDate;
-        return slotDate+slotTime;
+    @Override
+    public void changeTheOrderQueueToMakeDeliveryEfficient(ChangeRiderPickUpDeliveryOrderQueue changeRiderPickUpDeliveryOrderQueue) {
+        String keyForBatch;
+        try {
+            keyForBatch = changeRiderPickUpDeliveryOrderQueue.timeSlotDate() + changeRiderPickUpDeliveryOrderQueue.timeSlotTime();
+            // LOGGER.info("removeAndGetFirstOrderIdFromSlotQueue(): Initiating request to remove and get first orderId for batchKey: {} and riderDeliveryTask: {}", keyForBatch, riderDeliveryTask);
+            databaseOperationsService.changeIndexOfAGivenValueInList(keyForBatch, changeRiderPickUpDeliveryOrderQueue.orderId(), changeRiderPickUpDeliveryOrderQueue.indexToChange(), changeRiderPickUpDeliveryOrderQueue.riderDeliveryTask());
+        } catch (Exception ex) {
+            throw new RedisDBException(ex.getMessage());
+        }
     }
+
+    @Override
+    public List<String> getAllTheOrdersIdListPresentInsideGivenSlot() {
+        try {
+            databaseOperationsService.getAllOrderIdsInBatchSlot();
+        } catch (Exception ex) {
+
+        }
+    }
+
 }

@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class DatabaseOperationsService {
 
@@ -39,19 +42,51 @@ public class DatabaseOperationsService {
         return 0L;
     }
 
-    public String removeAndGetTheFirstOrderIdInBatchSlot(String keyForBatch, RiderDeliveryTask riderDeliveryTask) {
+    public String getTheFirstOrderIdInBatchSlot(String keyForBatch, RiderDeliveryTask riderDeliveryTask) {
         try {
             String value = (String) redisTemplate.opsForList().index(keyForBatch+ riderDeliveryTask,0);
             if(value == null) {
                 if(redisTemplate.opsForList().size(keyForBatch)==0) return "";
-                String errorMessage = String.format("removeAndGetTheFirstOrderIdInBatchSlot(): Value exists in list for key: %s but db does not return anything", keyForBatch);
+                String errorMessage = String.format("getTheFirstOrderIdInBatchSlot(): Value exists in list for key: %s but db does not return anything", keyForBatch);
                 LOGGER.error(errorMessage);
                 throw new RedisDBException(errorMessage);
             }
             return value;
         } catch (Exception ex) {
-            LOGGER.error("removeAndGetTheFirstOrderIdInBatchSlot(): Exception occurred while deleting and getting the first orderId for given batch slot key: {}, Exception: {}", keyForBatch, ex.getMessage());
+            LOGGER.error("getTheFirstOrderIdInBatchSlot(): Exception occurred while deleting and getting the first orderId for given batch slot key: {}, Exception: {}", keyForBatch, ex.getMessage());
             return "";
+        }
+    }
+
+    public List<String> getAllOrderIdsInBatchSlot(String keyForBatch, RiderDeliveryTask riderDeliveryTask) {
+        try {
+            return redisTemplate.opsForList().range(keyForBatch+riderDeliveryTask,0,-1);
+        } catch (Exception ex) {
+            LOGGER.error("getAllOrderIdsInBatchSlot(): Exception occurred while getting all the orders present inside the given batch slot key: {}, Exception: {}", keyForBatch, ex.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public void changeIndexOfAGivenValueInList(String keyForBatch, String value, Integer index, RiderDeliveryTask riderDeliveryTask) {
+        try {
+            redisTemplate.opsForZSet()
+            redisTemplate.opsForZSet().add(keyForBatch+riderDeliveryTask, value, 1);
+            Long indexAtWhichValueIsPresent = redisTemplate.opsForList().indexOf(keyForBatch+riderDeliveryTask, value);
+            if(indexAtWhichValueIsPresent==null || indexAtWhichValueIsPresent.compareTo(Long.valueOf(index))==0 ) {
+                return;
+            }
+            redisTemplate.opsForList().rightPushAll()
+            redisTemplate.opsForList().set(keyForBatch, index, value);
+//            if(value == null) {
+//                if(redisTemplate.opsForList().size(keyForBatch)==0) return "";
+//                String errorMessage = String.format("getTheFirstOrderIdInBatchSlot(): Value exists in list for key: %s but db does not return anything", keyForBatch);
+//                LOGGER.error(errorMessage);
+//                throw new RedisDBException(errorMessage);
+//            }
+//            return value;
+        } catch (Exception ex) {
+            LOGGER.error("getTheFirstOrderIdInBatchSlot(): Exception occurred while deleting and getting the first orderId for given batch slot key: {}, Exception: {}", keyForBatch, ex.getMessage());
+            return ;
         }
     }
 

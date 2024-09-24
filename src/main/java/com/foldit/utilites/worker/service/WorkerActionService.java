@@ -246,7 +246,7 @@ public class WorkerActionService {
                     LOGGER.error(errorMessage);
                     throw new RecordsValidationException(errorMessage);
                 }
-                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(orderDetails, negotiationConfigHolder, DROP);
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(orderDetails, DROP);
                 return  null;
             });
 

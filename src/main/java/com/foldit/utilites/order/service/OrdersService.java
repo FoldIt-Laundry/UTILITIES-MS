@@ -133,7 +133,7 @@ public class OrdersService {
             // Save order details in DB
             CompletableFuture<OrderDetails> orderDetailsInsertedInDb =  CompletableFuture.supplyAsync(() -> {
                 OrderDetails updatedOrderDetails = iOrderDetails.save(orderDetails);
-                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails, negotiationConfigHolder, PICKUP);
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue(updatedOrderDetails, PICKUP);
                 return updatedOrderDetails;
             });
 
