@@ -81,6 +81,20 @@ public class RiderActionsController {
         }
     }
 
+    @GetMapping("/rider/getPickUpDropTimeSlots")
+    public ResponseEntity<PickUpAndDeliverySlotsResponse> getPickUpDropTimeSlots(@RequestHeader(value="authToken") String authToken, @RequestParam("riderId") String riderId) {
+        PickUpAndDeliverySlotsResponse pickUpAndDeliverySlotsResponse;
+        try {
+            LOGGER.info("getPickUpDropTimeSlots(): Get pickup and drop delivery slots riderId: {} and authToken: {}", riderId, authToken);
+            pickUpAndDeliverySlotsResponse = riderActionsService.getPickUpDropTimeSlots(authToken, riderId);
+            return new ResponseEntity<>(pickUpAndDeliverySlotsResponse, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            throw new MongoDBReadException(ex.getMessage(), ex);
+        }
+    }
+
     @PostMapping("/rider/markOrderPickedUpFromCustomerHome")
     public ResponseEntity<MarkOrderPickedUpResponse> markOrderPickedUpFromCustomerHome(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderPickedUpRequest markOrderPickedUpRequest) {
         try {

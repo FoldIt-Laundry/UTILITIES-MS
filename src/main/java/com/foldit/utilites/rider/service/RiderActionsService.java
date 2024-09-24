@@ -18,8 +18,10 @@ import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
 import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
 import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.OrderDeliveredRequest;
-import com.foldit.utilites.store.model.StoreDetails;
+import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
+import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
+import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.user.model.UserDetails;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
@@ -68,9 +70,11 @@ public class RiderActionsService {
     @Autowired
     private TokenValidationService tokenValidationService;
     private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
+    private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
 
-    public RiderActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService){
+    public RiderActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService, @Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup){
         this.orderOperationsInSlotQueue = orderIdService;
+        this.iGetTimeSlotsForScheduledPickUp = slotsGeneratorForScheduledPickup;
     }
 
     @Transactional
@@ -133,6 +137,24 @@ public class RiderActionsService {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
             LOGGER.error("getAllDeliveryOrderDetails(): Exception occurred while performing read and write operation for riderId: {} and authToken: {} from monogoDb, Exception: %s", riderId, authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public PickUpAndDeliverySlotsResponse getPickUpDropTimeSlots(String authToken, String riderId) {
+        PickUpAndDeliverySlotsResponse pickUpAndDeliverySlotsResponse = new PickUpAndDeliverySlotsResponse();
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, riderId);
+            if(!shopConfigurationHolder.getStoreRiderIds().contains(riderId)) {
+                throw new AuthTokenValidationException(null);
+            }
+            pickUpAndDeliverySlotsResponse.setTimeSlots(iGetTimeSlotsForScheduledPickUp.getRiderAdminTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime()));
+            return pickUpAndDeliverySlotsResponse;
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("getPickUpDropTimeSlots(): Exception occurred while performing read and write operation for riderId: {} and authToken: {} from monogoDb, Exception: %s", riderId, authToken, ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
         }
     }

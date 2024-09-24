@@ -1,21 +1,13 @@
-1) Need to optimize the local cache wali thing and completable future wala concept
+1) Negotiation configuration holder api change
 2) Api to reschedule or cancel the order
 3) Need to fix the slot generator
 4) Rider ke lie slots ka
-
+5) Utility controller to refresh the all the configurations
 
 
 
 
 Rider is going for a rider and in between a admin changes the order that should not be allowed at any given time ? or locking at db level
-
-
-
-
-
-
--- Version
--- Name api first time
 
 
 -----------------------
@@ -25,4 +17,3 @@ How to calculate the offer price to the user
 
 
 1) Shop admin changes the price of any service how to refresh call ? Api is already there need to call it ? Add api to change the price for it
-2) Utility controller to refresh the all the configurations

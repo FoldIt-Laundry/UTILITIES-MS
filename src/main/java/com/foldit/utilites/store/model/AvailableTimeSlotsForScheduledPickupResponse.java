@@ -1,6 +1,8 @@
 package com.foldit.utilites.store.model;
 
 
+import com.foldit.utilites.rider.model.RiderDeliveryTask;
+
 import java.util.List;
 import java.util.Map;
 

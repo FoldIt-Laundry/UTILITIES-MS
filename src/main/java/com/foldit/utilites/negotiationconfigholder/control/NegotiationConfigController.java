@@ -2,6 +2,7 @@ package com.foldit.utilites.negotiationconfigholder.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.negotiationconfigholder.model.ChangeBatchSlotTimingRequest;
+import com.foldit.utilites.negotiationconfigholder.model.CurrentVersionResponse;
 import com.foldit.utilites.negotiationconfigholder.service.NegotiationConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
