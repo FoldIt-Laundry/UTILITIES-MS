@@ -2,9 +2,12 @@ package com.foldit.utilites.shopadmin.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
+import com.foldit.utilites.exception.RecordsValidationException;
+import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.rider.model.PickUpAndDeliverySlotsResponse;
 import com.foldit.utilites.shopadmin.model.AddOrderQuantityRequest;
 import com.foldit.utilites.shopadmin.model.AddOrderQuantityResponse;
+import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
 import com.foldit.utilites.shopadmin.service.ShopAdminOrderOperationsService;
 import org.slf4j.Logger;
@@ -13,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 
@@ -64,6 +70,24 @@ public class ShopAdminOrderOperationsController {
         }
     }
 
-    // api to get those orders from the given queue
+    @PostMapping("/admin/allOrderListForGivenTimeSlot")
+    public ResponseEntity<List<OrderDetails>> allOrderListForGivenTimeSlot(@RequestHeader(value="authToken") String authToken, @RequestBody AllOrderForAGivenSlot allOrderForAGivenSlot) {
+        List<OrderDetails> orderDetailsList;
+        try {
+            LOGGER.info("allOrderListForGivenTimeSlot(): Get all order details for a given time slot: {} and authToken: {}", toJson(allOrderForAGivenSlot), authToken);
+            orderDetailsList = shopAdminOrderOperationsService.allOrderListForGivenTimeSlot(authToken, allOrderForAGivenSlot);
+            return new ResponseEntity<>(orderDetailsList, HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("allOrderListForGivenTimeSlot(): Request data validation failed for the input request object: {}, Exception: {}", toJson(allOrderForAGivenSlot), ex.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+        } catch (AuthTokenValidationException ex) {
+            LOGGER.error("allOrderListForGivenTimeSlot(): Auth Validation failed for adminId: {} and authToken: {}, Exception: {}", allOrderForAGivenSlot.adminId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(allOrderForAGivenSlot), ex.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.SERVICE_UNAVAILABLE);
+        }
+
+    }
 
 }

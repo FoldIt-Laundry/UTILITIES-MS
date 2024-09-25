@@ -6,11 +6,14 @@ import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
+import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.foldit.utilites.helper.DateOperations.batchSizeForSlotsMapping;
 
@@ -64,11 +67,14 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
     }
 
     @Override
-    public List<String> getAllTheOrdersIdListPresentInsideGivenSlot() {
+    public List<String> getAllTheOrdersIdListPresentInsideGivenSlot(AllOrderForAGivenSlot allOrderForAGivenSlot) {
+        String keyForBatch;
         try {
-            databaseOperationsService.getAllOrderIdsInBatchSlot();
+            keyForBatch = allOrderForAGivenSlot.timeSlotDate() + allOrderForAGivenSlot.timeSlotTime();
+            return databaseOperationsService.getAllOrderIdsInBatchSlot(keyForBatch, allOrderForAGivenSlot.riderDeliveryTask());
         } catch (Exception ex) {
-
+            LOGGER.error(ex.getMessage(), ex);
+            throw new RedisDBException(ex.getMessage(), ex);
         }
     }
 

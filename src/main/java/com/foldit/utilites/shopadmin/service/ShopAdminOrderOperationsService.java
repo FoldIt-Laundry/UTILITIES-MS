@@ -5,6 +5,7 @@ import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
+import com.foldit.utilites.exception.RedisDBException;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
@@ -19,6 +20,7 @@ import com.foldit.utilites.rider.model.RiderDeliveryTask;
 import com.foldit.utilites.shopadmin.control.ShopAdminOrderOperationsController;
 import com.foldit.utilites.shopadmin.model.AddOrderQuantityRequest;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
+import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
@@ -161,6 +163,30 @@ public class ShopAdminOrderOperationsService {
     }
 
 
+    @Transactional(readOnly = true)
+    public List<OrderDetails> allOrderListForGivenTimeSlot(String authToken, AllOrderForAGivenSlot allOrderForAGivenSlot) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, allOrderForAGivenSlot.adminId());
+            if(!shopConfigurationHolder.getStoreAdminIds().contains(allOrderForAGivenSlot.adminId()) || !validateGivenSlotExistOrNot2(allOrderForAGivenSlot) ) {
+                LOGGER.error("changOrderQueueForRiderPickUpAndDrop(): Validation failed either the given slot:{} does not exist", toJson(allOrderForAGivenSlot));
+                throw new RecordsValidationException(null);
+            }
+            List<String> allOrdersList = orderOperationsInSlotQueue.getAllTheOrdersIdListPresentInsideGivenSlot(allOrderForAGivenSlot);
+            return iOrderDetails.findAllById(allOrdersList);
+        } catch (RedisDBException ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            throw new RedisDBException(ex.getMessage(), ex);
+        } catch (RecordsValidationException ex) {
+            throw new RecordsValidationException(ex.getMessage());
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while performing read and write operation in database for adminId: {} and authToken: {} from monogoDb and request payload: {}, Exception: %s", allOrderForAGivenSlot.adminId(), authToken, toJson(allOrderForAGivenSlot), ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+
 
 
     public boolean validateGivenSlotExistOrNot(ChangeRiderPickUpDeliveryOrderQueue orderQueueReq) {
@@ -169,6 +195,15 @@ public class ShopAdminOrderOperationsService {
             return true;
         }
         LOGGER.error("validateGivenSlotExistOrNot(): Given slotsMap: {} and inputSlot does not exist: {}", toJson(slotsMap), toJson(orderQueueReq));
+        return false;
+    }
+
+    public boolean validateGivenSlotExistOrNot2(AllOrderForAGivenSlot allOrderForAGivenSlot) {
+        Map<String, Map<RiderDeliveryTask, List<String>>> slotsMap = iGetTimeSlotsForScheduledPickUp.getRiderAdminTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
+        if( slotsMap!=null && slotsMap.containsKey(allOrderForAGivenSlot.timeSlotDate()) && slotsMap.get(allOrderForAGivenSlot.timeSlotDate()).containsKey(allOrderForAGivenSlot.riderDeliveryTask()) && slotsMap.get(allOrderForAGivenSlot.timeSlotDate()).get(allOrderForAGivenSlot.riderDeliveryTask()).contains(allOrderForAGivenSlot.timeSlotTime()) ){
+            return true;
+        }
+        LOGGER.error("validateGivenSlotExistOrNot2(): Given slotsMap: {} and inputSlot does not exist: {}", toJson(slotsMap), toJson(allOrderForAGivenSlot));
         return false;
     }
 

@@ -62,20 +62,21 @@ public class DatabaseOperationsService {
         try {
             return redisTemplate.opsForList().range(keyForBatch+riderDeliveryTask,0,-1);
         } catch (Exception ex) {
-            LOGGER.error("getAllOrderIdsInBatchSlot(): Exception occurred while getting all the orders present inside the given batch slot key: {}, Exception: {}", keyForBatch, ex.getMessage());
-            return new ArrayList<>();
+            String errorMessage  = String.format("getAllOrderIdsInBatchSlot(): Exception occurred while getting all the orders present inside the given batch slot key: %s and riderDeliveryTask: %s , Exception: %s", keyForBatch, riderDeliveryTask, ex.getMessage());
+            LOGGER.error(errorMessage, ex);
+            throw new RedisDBException(errorMessage, ex);
         }
     }
 
     public void changeIndexOfAGivenValueInList(String keyForBatch, String value, Integer index, RiderDeliveryTask riderDeliveryTask) {
         try {
-            redisTemplate.opsForZSet()
-            redisTemplate.opsForZSet().add(keyForBatch+riderDeliveryTask, value, 1);
-            Long indexAtWhichValueIsPresent = redisTemplate.opsForList().indexOf(keyForBatch+riderDeliveryTask, value);
-            if(indexAtWhichValueIsPresent==null || indexAtWhichValueIsPresent.compareTo(Long.valueOf(index))==0 ) {
-                return;
-            }
-            redisTemplate.opsForList().rightPushAll()
+//            redisTemplate.opsForZSet()
+//            redisTemplate.opsForZSet().add(keyForBatch+riderDeliveryTask, value, 1);
+//            Long indexAtWhichValueIsPresent = redisTemplate.opsForList().indexOf(keyForBatch+riderDeliveryTask, value);
+//            if(indexAtWhichValueIsPresent==null || indexAtWhichValueIsPresent.compareTo(Long.valueOf(index))==0 ) {
+//                return;
+//            }
+//            redisTemplate.opsForList().rightPushAll()
             redisTemplate.opsForList().set(keyForBatch, index, value);
 //            if(value == null) {
 //                if(redisTemplate.opsForList().size(keyForBatch)==0) return "";

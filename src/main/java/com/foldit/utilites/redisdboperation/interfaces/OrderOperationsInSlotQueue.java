@@ -4,7 +4,10 @@ import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
+import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
+
+import java.util.List;
 
 public interface OrderOperationsInSlotQueue {
 
@@ -13,5 +16,7 @@ public interface OrderOperationsInSlotQueue {
     String getFirstOrderIdFromSlotQueue(NextPickUpDropOrderDetailsRequest nextPickUpDropOrderDetailsRequest, RiderDeliveryTask riderDeliveryTask);
 
     void changeTheOrderQueueToMakeDeliveryEfficient(ChangeRiderPickUpDeliveryOrderQueue changeRiderPickUpDeliveryOrderQueue);
+
+    List<String> getAllTheOrdersIdListPresentInsideGivenSlot(AllOrderForAGivenSlot allOrderForAGivenSlot);
 
 }
