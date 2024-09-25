@@ -2,14 +2,10 @@ package com.foldit.utilites.shopadmin.service;
 
 import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.dao.IUserDetails;
-import com.foldit.utilites.exception.AuthTokenValidationException;
-import com.foldit.utilites.exception.MongoDBReadException;
-import com.foldit.utilites.exception.RecordsValidationException;
-import com.foldit.utilites.exception.RedisDBException;
+import com.foldit.utilites.exception.*;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
-import com.foldit.utilites.negotiationconfigholder.ServiceNegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.CostStructure;
 import com.foldit.utilites.order.model.OrderDetails;
@@ -22,10 +18,12 @@ import com.foldit.utilites.shopadmin.model.AddOrderQuantityRequest;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
 import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
+import com.foldit.utilites.shopadmin.model.UpdateEtaForDeliveryServiceRequest;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.user.model.UserDetails;
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,8 +48,6 @@ public class ShopAdminOrderOperationsService {
 
     private static final Logger LOGGER =  LoggerFactory.getLogger(ShopAdminOrderOperationsController.class);
 
-    @Autowired
-    private ServiceNegotiationConfigHolder serviceNegotiationConfigHolder;
     @Autowired
     private ShopConfigurationHolder shopConfigurationHolder;
     @Autowired
@@ -85,7 +81,7 @@ public class ShopAdminOrderOperationsService {
                 throw new RecordsValidationException(errorMessage);
             }
 
-            CostStructure billDetails = getFinalBillDetailsFromQuantity(serviceNegotiationConfigHolder.getServiceIdVsServicePrice(), addOrderQuantityRequest.getServiceIdVsServiceQuantity());
+            CostStructure billDetails = getFinalBillDetailsFromQuantity(shopConfigurationHolder.getServiceIdVsServicePrice(), addOrderQuantityRequest.getServiceIdVsServiceQuantity());
 
             Query query = new Query(Criteria.
                     where("_id").is(addOrderQuantityRequest.getOrderId()));
@@ -183,6 +179,33 @@ public class ShopAdminOrderOperationsService {
         } catch (Exception ex) {
             LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while performing read and write operation in database for adminId: {} and authToken: {} from monogoDb and request payload: {}, Exception: %s", allOrderForAGivenSlot.adminId(), authToken, toJson(allOrderForAGivenSlot), ex.getMessage());
             throw new MongoDBReadException(ex.getMessage());
+        }
+    }
+
+    @Transactional
+    public void updateEtaForDeliveryServices(String authToken, UpdateEtaForDeliveryServiceRequest deliveryRequest) {
+        try {
+            tokenValidationService.authTokenValidationFromUserId(authToken, deliveryRequest.getAdminId());
+            if(StringUtils.isNotBlank(deliveryRequest.getServiceId()) && Double.isNaN( deliveryRequest.getServiceTime()) ) {
+                String errorMessage = String.format("updateEtaForDeliveryServices(): Input provided is null or corrupt for payload: %s for userId: %s",toJson(deliveryRequest), deliveryRequest.getAdminId());
+                LOGGER.error(errorMessage);
+                throw new RecordsValidationException(errorMessage);
+            }
+            Query query = new Query(Criteria.where("shopAdminIds").in(deliveryRequest.getAdminId())
+                    .and("serviceOffered.serviceId").is(deliveryRequest.getServiceId()));
+            Update update = new Update().set("serviceOffered.$.serviceTime", deliveryRequest.getServiceTime());
+            UpdateResult updateResult = mongoTemplate.updateMulti(query, update, "StoreInformation");
+            if(updateResult.getModifiedCount()==0 && updateResult.getMatchedCount()==0 ) {
+                throw new MongoDBInsertionException("Not able to find the userID in the shop or serviceId is incorrect");
+            }
+            shopConfigurationHolder.updateAllServicesInformation();
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (RecordsValidationException ex) {
+            throw new RecordsValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("updateEtaForDeliveryServices(): Exception occurred while updating the eta for services data in mongoDB, Exception: %s",  ex.getMessage());
+            throw new MongoDBInsertionException(ex.getMessage());
         }
     }
 

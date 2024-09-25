@@ -2,7 +2,11 @@ package com.foldit.utilites.user.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
+import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.homepage.control.HomePageController;
+import com.foldit.utilites.order.model.OrderDetails;
+import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
+import com.foldit.utilites.user.model.CancelOrderRequest;
 import com.foldit.utilites.user.model.OnBoardNewUserLocation;
 import com.foldit.utilites.user.model.UserDetails;
 import com.foldit.utilites.user.model.UserLocation;
@@ -71,6 +75,24 @@ public class UserActionsController {
         } catch (Exception ex) {
             LOGGER.error("getAllUserLocations(): Exception occured while getting all the user location, Exception: %s", ex.getMessage());
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/userActions/cancelOnGoingOrder")
+    public ResponseEntity<Boolean> cancelOnGoingOrder(@RequestHeader(value="authToken") String authToken, @RequestBody CancelOrderRequest cancelOrderRequest) {
+        try {
+            LOGGER.info("cancelOnGoingOrder(): Initiating request to cancel the order details: {} and authToken: {}", toJson(cancelOrderRequest), authToken);
+            userActionsService.cancelOnGoingOrder(authToken, cancelOrderRequest);
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("cancelOnGoingOrder(): Request data validation failed for the input request object: {}, Exception: {}", toJson(cancelOrderRequest), ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        } catch (AuthTokenValidationException ex) {
+            LOGGER.error("cancelOnGoingOrder(): Auth Validation failed for userId: {} and authToken: {}, Exception: {}", cancelOrderRequest.userId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("cancelOnGoingOrder(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(cancelOrderRequest), ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 

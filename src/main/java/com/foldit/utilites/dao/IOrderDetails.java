@@ -2,6 +2,7 @@ package com.foldit.utilites.dao;
 
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.OrderDetails;
+import com.foldit.utilites.order.model.WorkflowStatus;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -10,14 +11,14 @@ import java.util.List;
 public interface IOrderDetails extends MongoRepository<OrderDetails, String> {
 
     @Aggregation(pipeline = {
-            "{ $match: { 'userId': ?0 }},"
+            "{ $match: { 'userId': ?0 }}"
     })
     List<OrderDetails> getAllOrdersListFromUserId(String userId);
 
     @Aggregation(pipeline = {
-            "{ $match: { 'userId': ?0, 'workflowStatus': ?1 }},"
+            "{ $match: { 'userId': ?0, 'userWorkflowStatus': {'$nin':  ?1} }}"
     })
-    List<OrderDetails> getAllActiveOrdersListFromUserId(String userId, String workflowStatus);
+    List<OrderDetails> getAllActiveOrdersListFromUserId(String userId, List<WorkflowStatus> workflowStatus);
 
     @Aggregation(pipeline = {
             "{ $match: { 'userId': ?0 }},",

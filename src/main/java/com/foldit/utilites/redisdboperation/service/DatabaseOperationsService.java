@@ -1,5 +1,6 @@
 package com.foldit.utilites.redisdboperation.service;
 
+import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.RedisDBException;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
 import org.slf4j.Logger;
@@ -27,15 +28,17 @@ public class DatabaseOperationsService {
             if (storedAuthToken != null && storedAuthToken.equalsIgnoreCase(authToken)) {
                 return true;
             }
+            LOGGER.error("validateAuthToken(): Auth validation failed for userId: {} and authToken: {}", userIdVerificationKey, authToken);
+            throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
             LOGGER.error("validateAuthToken(): Exception occured while validating the auth token: {}, Exception: {}", authToken, ex.getMessage());
+            throw new AuthTokenValidationException(null);
         }
-        return false;
     }
 
     public Long addOrderIdInBatchSlot(String orderId, String keyForBatch, RiderDeliveryTask riderDeliveryTask) {
         try {
-            return redisTemplate.opsForList().rightPush(keyForBatch+ riderDeliveryTask, orderId);
+            return redisTemplate.opsForList().rightPush(keyForBatch + riderDeliveryTask, orderId);
         } catch (Exception ex) {
             LOGGER.error("addOrderIdInBatchSlot(): Exception occurred while adding orderId: {} in given batch slot", orderId, keyForBatch);
         }
@@ -63,6 +66,21 @@ public class DatabaseOperationsService {
             return redisTemplate.opsForList().range(keyForBatch+riderDeliveryTask,0,-1);
         } catch (Exception ex) {
             String errorMessage  = String.format("getAllOrderIdsInBatchSlot(): Exception occurred while getting all the orders present inside the given batch slot key: %s and riderDeliveryTask: %s , Exception: %s", keyForBatch, riderDeliveryTask, ex.getMessage());
+            LOGGER.error(errorMessage, ex);
+            throw new RedisDBException(errorMessage, ex);
+        }
+    }
+
+    public void deleteAGivenOrderIdInBatchSlot(String orderId,String keyForBatch, RiderDeliveryTask riderDeliveryTask) {
+        try {
+            Long count = redisTemplate.opsForList().remove(keyForBatch+riderDeliveryTask,0,orderId);
+            if(count==0) {
+                String errorMessage  = String.format("deleteAGivenOrderIdInBatchSlot(): Given orderId: %s does not exist in batch slot: %s for task: %s", orderId, keyForBatch, riderDeliveryTask);
+                LOGGER.error(errorMessage);
+                throw new RedisDBException(errorMessage);
+            }
+        } catch (Exception ex) {
+            String errorMessage  = String.format("deleteAGivenOrderIdInBatchSlot(): Exception occurred while deleting the orderId: %s from the batchSlot: %s and riderDeliveryTask: %s , Exception: %s", orderId, keyForBatch, riderDeliveryTask, ex.getMessage());
             LOGGER.error(errorMessage, ex);
             throw new RedisDBException(errorMessage, ex);
         }

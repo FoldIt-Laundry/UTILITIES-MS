@@ -6,6 +6,7 @@ import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
+import com.foldit.utilites.exception.RedisDBException;
 import com.foldit.utilites.firebase.model.NotificationMessageRequest;
 import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
@@ -164,8 +165,10 @@ public class RiderActionsService {
         try {
             String shopId = negotiationConfigHolder.getDefaultShopId();
             tokenValidationService.authTokenValidationFromUserId(authToken, orderRequest.getRiderId());
-            if (shopConfigurationHolder.getStoreRiderIds().contains(orderRequest.getRiderId())) {
-                String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): Given riderId: %s is not entitled to mark any order status for the storeId: %s", orderRequest.getRiderId(), shopId);
+            OrderDetails orderDetails = iOrderDetails.findById(orderRequest.getOrderId()).get();
+
+            if (shopConfigurationHolder.getStoreRiderIds().contains(orderRequest.getRiderId()) || !orderDetails.getWorkerRiderWorkflowStatus().toString().equalsIgnoreCase(String.valueOf(ASSIGNED_FOR_RIDER_PICKUP))) {
+                String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): Given riderId: %s is not entitled to mark any order status for the storeId: current order status is: %s and it should be: %s", orderRequest.getRiderId(), shopId, orderDetails.getWorkerRiderWorkflowStatus() , ASSIGNED_FOR_RIDER_PICKUP);
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
@@ -180,19 +183,19 @@ public class RiderActionsService {
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(orderRequest.getRiderId(), ACCEPTED + " " + ASSIGNED_FOR_RIDER_PICKUP, istTime.toLocalDateTime(), ORDER_PICKED_UP + " " + ORDER_PICKED_UP));
 
             // Updating order in db operations
-            CompletableFuture<Void> updateOrderPickedUpFromCustomerHomeInDb = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<OrderDetails> updateOrderPickedUpFromCustomerHomeInDb = CompletableFuture.supplyAsync(() -> {
                 UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
                 if (updateResult.getModifiedCount() != 1) {
                     String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): No records gets updated for the query: %s and update: %s and for payload:  %s", toJson(query), toJson(update), toJson(orderRequest));
                     LOGGER.error(errorMessage);
                     throw new RecordsValidationException(errorMessage);
                 }
+                orderOperationsInSlotQueue.deleteOrderFromBatchSlotQueues(orderDetails, PICKUP);
                 return  null;
             });
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(orderRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PICKED_UP));
                 return null;
@@ -208,6 +211,8 @@ public class RiderActionsService {
             });
 
 
+        } catch (RedisDBException ex) {
+            throw new RedisDBException(ex.getMessage(), ex);
         } catch (RecordsValidationException ex) {
             throw new AuthTokenValidationException(ex.getMessage());
         } catch (AuthTokenValidationException ex) {
@@ -275,12 +280,13 @@ public class RiderActionsService {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, deliveryRequest.getRiderId());
             String storeId = negotiationConfigHolder.getDefaultShopId();
-            if (!shopConfigurationHolder.getStoreRiderIds().contains(deliveryRequest.getRiderId())) {
+            OrderDetails orderDetails = iOrderDetails.findById(deliveryRequest.getOrderId()).get();
+
+            if (!shopConfigurationHolder.getStoreRiderIds().contains(deliveryRequest.getRiderId()) || !orderDetails.getWorkerRiderWorkflowStatus().toString().equalsIgnoreCase(String.valueOf(OUT_FOR_DELIVERY))) {
                 String errorMessage = String.format("confirmOrderDelivery(): Given riderId: %s is not entitled to mark any order status for the storeId: %s", deliveryRequest.getRiderId(), storeId);
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
-
 
             Query query = new Query(Criteria.
                     where("_id").is(deliveryRequest.getOrderId())
@@ -300,12 +306,12 @@ public class RiderActionsService {
                     LOGGER.error(errorMessage);
                     throw new RecordsValidationException(errorMessage);
                 }
+                orderOperationsInSlotQueue.deleteOrderFromBatchSlotQueues(orderDetails, DROP);
                 return  null;
             });
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = markOrderOutForDelivery.thenApplyAsync((Void) -> {
-                OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(deliveryRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_DELIVERED, USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY));
                 return null;

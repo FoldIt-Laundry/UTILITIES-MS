@@ -20,20 +20,20 @@ public class HomePageController {
 
     @GetMapping("/homepage/serviceAvailable")
     public ResponseEntity<ServiceAvailable> getListOfAvailableServices(@RequestHeader(value="authToken") String authToken, @RequestParam(required = false) String userId,@RequestParam(required = false) String mobileNumber) {
-        ServiceAvailable serviceAvailable;
+        ServiceAvailable serviceAvailable = new ServiceAvailable();
         try {
             LOGGER.info("getListOfAvailableServices(): Initiating request to get the list of available services for authToken: {} and userId: {} or mobileNumber: {}", authToken, userId, mobileNumber);
             serviceAvailable= homePageService.getAllAvailableService(authToken, userId, mobileNumber);
             return new ResponseEntity<>(serviceAvailable, HttpStatus.OK);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
-            throw new MongoDBReadException(ex.getMessage());
+            return new ResponseEntity<>(serviceAvailable, HttpStatus.OK);
         }
     }
+
     @GetMapping("/test")
     public String get(){
         return "Application up and running";
     }
-
 
 }

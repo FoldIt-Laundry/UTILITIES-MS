@@ -78,4 +78,16 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
         }
     }
 
+    @Override
+    public void deleteOrderFromBatchSlotQueues(OrderDetails orderDetails, RiderDeliveryTask riderDeliveryTask) {
+        String keyForBatch;
+        try {
+            keyForBatch = orderDetails.getBatchSlotTimingsDate() + orderDetails.getBatchSlotTimingsTime();
+            databaseOperationsService.deleteAGivenOrderIdInBatchSlot(orderDetails.getId(), keyForBatch, riderDeliveryTask);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            throw new RedisDBException(ex.getMessage(), ex);
+        }
+    }
+
 }

@@ -10,7 +10,8 @@ public enum WorkflowStatus {
     MAGIC_IN_PROGRESS(7),
     READY_FOR_DELIVERY(8),
     OUT_FOR_DELIVERY(9),
-    DELIVERED(10);
+    DELIVERED(10),
+    CANCELLED(11);
 
 
     public final int value;

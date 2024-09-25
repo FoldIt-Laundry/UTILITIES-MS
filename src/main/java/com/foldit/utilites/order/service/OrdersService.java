@@ -26,14 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
-import static com.foldit.utilites.order.model.WorkflowStatus.ORDER_PLACED;
-import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPROVAL;
+import static com.foldit.utilites.order.model.WorkflowStatus.*;
 import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
 
 
@@ -95,7 +95,7 @@ public class OrdersService {
     public List<OrderDetails> getAllActiveOrderDetailsFromUserId(String authToken, String userId) {
         try {
             validateAuthToken(userId, authToken);
-            return iOrderDetails.getAllActiveOrdersListFromUserId(userId,  "Completed");
+            return iOrderDetails.getAllActiveOrdersListFromUserId(userId, Arrays.asList(CANCELLED, DELIVERED));
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {

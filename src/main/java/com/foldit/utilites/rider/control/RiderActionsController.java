@@ -2,6 +2,8 @@ package com.foldit.utilites.rider.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
+import com.foldit.utilites.exception.RecordsValidationException;
+import com.foldit.utilites.exception.RedisDBException;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.rider.service.RiderActionsService;
@@ -101,10 +103,15 @@ public class RiderActionsController {
             LOGGER.info("markOrderPickedUpFromCustomerHome(): Initiating request to mark the order picked up from customer home, request details: {} and authToken: {}", toJson(markOrderPickedUpRequest), authToken);
             riderActionsService.markOrderPickedUpFromCustomerHome(authToken, markOrderPickedUpRequest);
             return new ResponseEntity<>(new MarkOrderPickedUpResponse(true), HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("markOrderPickedUpFromCustomerHome(): Request data validation failed for the input request object: {}, Exception: {}", toJson(markOrderPickedUpRequest), ex.getMessage());
+            return new ResponseEntity<>(new MarkOrderPickedUpResponse(false), HttpStatus.UNAUTHORIZED);
         } catch (AuthTokenValidationException ex) {
-            throw new AuthTokenValidationException(null);
+            LOGGER.error("markOrderPickedUpFromCustomerHome(): Invalid userID and authToken request are you a hacker ?, authToken: {} and riderId: {}, Exception: {}", authToken, markOrderPickedUpRequest.getRiderId(), ex.getMessage());
+            return new ResponseEntity<>(new MarkOrderPickedUpResponse(false), HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
-            throw new MongoDBReadException(ex.getMessage(), ex);
+            LOGGER.error("markOrderPickedUpFromCustomerHome(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(markOrderPickedUpRequest), ex.getMessage());
+            return new ResponseEntity<>(new MarkOrderPickedUpResponse(false), HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 

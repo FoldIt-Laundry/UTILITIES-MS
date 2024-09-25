@@ -1,6 +1,8 @@
 package com.foldit.utilites.negotiationconfigholder;
 
 import com.foldit.utilites.dao.IStoreDetails;
+import com.foldit.utilites.homepage.model.Services;
+import com.foldit.utilites.store.model.ServiceOffered;
 import com.foldit.utilites.store.model.StoreDetails;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -8,7 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ShopConfigurationHolder {
@@ -19,6 +24,8 @@ public class ShopConfigurationHolder {
     private List<String> storeWorkerIds;
     private String shopOpeningTime;
     private String shopClosingTime;
+    private List<ServiceOffered> allAvailableServices;
+    private Map<String,Double> serviceIdVsServicePrice = new HashMap<>();
 
     @Autowired
     private IStoreDetails iStoreDetails;
@@ -28,11 +35,25 @@ public class ShopConfigurationHolder {
     @PostConstruct
     public void populateConfigurations() {
         StoreDetails storeDetails = iStoreDetails.findById(negotiationConfigHolder.getDefaultShopId()).get();
+        allAvailableServices = storeDetails.getServiceOffered();
+        serviceIdVsServicePrice = allAvailableServices.stream().collect(Collectors.toMap(ServiceOffered::getServiceId, ServiceOffered::getPricing));
         storeAdminIds = storeDetails.getShopAdminIds();
         storeRiderIds = storeDetails.getShopRiderIds();
         storeWorkerIds = storeDetails.getShopWorkerIds();
         shopOpeningTime = storeDetails.getOperatingHourStartTime();
         shopClosingTime = storeDetails.getOperatingHourEndTime();
+    }
+
+    public void updateAllServicesInformation() {
+        LOGGER.info("updateAllServicesInformation(): Request received to update all the services information");
+        allAvailableServices = iStoreDetails.findById(negotiationConfigHolder.getDefaultShopId()).get().getServiceOffered();
+        LOGGER.info("updateAllServicesInformation(): All the services information has been updated successfully");
+    }
+
+    public void updateServiceIdVsServicePricingMap(){
+        LOGGER.info("updateServiceIdVsServicePricingMap(): Request received to update the serviceId vs service pricing map in db ");
+        serviceIdVsServicePrice = allAvailableServices.stream().collect(Collectors.toMap(ServiceOffered::getServiceId, ServiceOffered::getPricing));
+        LOGGER.info("updateServiceIdVsServicePricingMap(): serviceId vs service pricing map has been updated successfully in db ");
     }
 
     public void updateRiderIds() {
@@ -56,6 +77,9 @@ public class ShopConfigurationHolder {
         LOGGER.info("updateWorkerIds(): Riders Id has been updated successfully in db");
     }
 
+    public Map<String, Double> getServiceIdVsServicePrice() {
+        return serviceIdVsServicePrice;
+    }
     public String getShopOpeningTime() {
         return shopOpeningTime;
     }
@@ -74,5 +98,9 @@ public class ShopConfigurationHolder {
 
     public List<String> getStoreWorkerIds() {
         return storeWorkerIds;
+    }
+
+    public List<ServiceOffered> getAllAvailableServices() {
+        return allAvailableServices;
     }
 }

@@ -1,8 +1,25 @@
-1) Api to reschedule or cancel the order
-2) Utility controller to refresh the all the configurations
+
+
+-- Enhance the logic for multi party queries
+
+-- Api to reschedule
+
+-- Utility controller to refresh the configurations
+
+-- Api to change the admin response
+
+-- Api to trigger the admin srarus
+
+5) Assigned for rider pickup manually we have to trigger this endpoint
+6) Check to admin order allows to checkout the of current data
+7) 9:30 time check before 30 min
+5) Admin to trigger the ai to mark all the order has out for pickup for all the orders
 
 
 
-------------------------
-How to calculate the offer price to the user
-------------------------
+
+To test :-
+
+
+1) Cancelling the order for given timestamp
+2)

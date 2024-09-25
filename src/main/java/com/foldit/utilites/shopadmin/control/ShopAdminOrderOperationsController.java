@@ -5,10 +5,7 @@ import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.rider.model.PickUpAndDeliverySlotsResponse;
-import com.foldit.utilites.shopadmin.model.AddOrderQuantityRequest;
-import com.foldit.utilites.shopadmin.model.AddOrderQuantityResponse;
-import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
-import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
+import com.foldit.utilites.shopadmin.model.*;
 import com.foldit.utilites.shopadmin.service.ShopAdminOrderOperationsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +84,24 @@ public class ShopAdminOrderOperationsController {
             LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(allOrderForAGivenSlot), ex.getMessage());
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.SERVICE_UNAVAILABLE);
         }
+    }
 
+    @PatchMapping("/shopAdmin/updateEtaForDeliveryServices")
+    public ResponseEntity<Boolean> updateEtaForDeliveryServices(@RequestHeader(value="authToken") String authToken, @RequestBody UpdateEtaForDeliveryServiceRequest deliveryServiceRequest){
+        try {
+            LOGGER.info("updateEtaForDeliveryServices(): Request received to update the eta for delivery services: {} and authToken: {}", toJson(deliveryServiceRequest), authToken);
+            shopAdminOrderOperationsService.updateEtaForDeliveryServices(authToken, deliveryServiceRequest);
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            LOGGER.error("updateEtaForDeliveryServices(): Auth Validation failed for adminId: {} and authToken: {}, Exception: {}", deliveryServiceRequest.getAdminId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("updateEtaForDeliveryServices(): Request data validation failed for the input request object: {}, Exception: {}", toJson(deliveryServiceRequest), ex.getMessage());
+            throw new RecordsValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("updateEtaForDeliveryServices(): Exception occurred while updating the updateEtaForDeliveryServices, Exception: %s", ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        }
     }
 
 }
