@@ -1,21 +1,19 @@
 package com.foldit.utilites.redisdboperation.service;
 
 import com.foldit.utilites.exception.RedisDBException;
-import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
-import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
+import com.foldit.utilites.shopadmin.model.OrderRequestForAGivenTimeSlot;
 import com.foldit.utilites.shopadmin.model.ChangeRiderPickUpDeliveryOrderQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static com.foldit.utilites.helper.DateOperations.batchSizeForSlotsMapping;
 
 @Service
 public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQueue {
@@ -41,6 +39,7 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String getFirstOrderIdFromSlotQueue(NextPickUpDropOrderDetailsRequest pickUpOrderRequest, RiderDeliveryTask riderDeliveryTask) {
         String keyForBatch;
         String orderId;
@@ -66,12 +65,14 @@ public class OrderOperationsInSlotQueueService implements OrderOperationsInSlotQ
         }
     }
 
+
     @Override
-    public List<String> getAllTheOrdersIdListPresentInsideGivenSlot(AllOrderForAGivenSlot allOrderForAGivenSlot) {
+    @Transactional(readOnly = true)
+    public List<String> getAllTheOrdersIdListPresentInsideGivenSlot(OrderRequestForAGivenTimeSlot orderRequestForAGivenTimeSlot) {
         String keyForBatch;
         try {
-            keyForBatch = allOrderForAGivenSlot.timeSlotDate() + allOrderForAGivenSlot.timeSlotTime();
-            return databaseOperationsService.getAllOrderIdsInBatchSlot(keyForBatch, allOrderForAGivenSlot.riderDeliveryTask());
+            keyForBatch = orderRequestForAGivenTimeSlot.timeSlotDate() + orderRequestForAGivenTimeSlot.timeSlotTime();
+            return databaseOperationsService.getAllOrderIdsInBatchSlot(keyForBatch, orderRequestForAGivenTimeSlot.riderDeliveryTask());
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
             throw new RedisDBException(ex.getMessage(), ex);

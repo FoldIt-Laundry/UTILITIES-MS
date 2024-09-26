@@ -87,6 +87,7 @@ public class WorkerActionService {
     @Transactional
     public void approvePendingOrder(String authToken, ApproveOrderRequest approveOrderRequest) {
         try {
+            String defaultShop = negotiationConfigHolder.getDefaultShopId();
             tokenValidationService.authTokenValidationFromUserId(authToken, approveOrderRequest.getWorkerId());
             StoreDetails storeDetails = iStoreDetails.getShopIdWhichWorkerIsPartOf(Arrays.asList(approveOrderRequest.getWorkerId()));
             if(storeDetails.getId().equalsIgnoreCase(approveOrderRequest.getStoreId())) {
@@ -94,16 +95,17 @@ public class WorkerActionService {
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
-            Query query = new Query(Criteria.
-                    where("_id").is(approveOrderRequest.getWorkerId())
-                    .where("storeId").is(approveOrderRequest.getStoreId())
-                    .where("userWorkflowStatus").is(ORDER_PLACED)
-                    .where("workerRiderWorkflowStatus").is(PENDING_WORKER_APPROVAL));
+
+
+            Query query = new Query().addCriteria(Criteria
+                    .where("_id").is(approveOrderRequest.getWorkerId())
+                    .and("storeId").is(defaultShop)
+                    .and("userWorkflowStatus").is(ORDER_PLACED)
+                    .and("workerRiderWorkflowStatus").is(PENDING_WORKER_APPROVAL));
             Update update = new Update()
                     .set("userWorkflowStatus", ACCEPTED)
-                    .set("workerRiderWorkflowStatus", ASSIGNED_FOR_RIDER_PICKUP)
-                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(approveOrderRequest.getWorkerId(), ORDER_PLACED + " " + PENDING_WORKER_APPROVAL, istTime.toLocalDateTime(), ACCEPTED + " " + ASSIGNED_FOR_RIDER_PICKUP));
-
+                    .set("workerRiderWorkflowStatus", ACCEPTED)
+                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(approveOrderRequest.getWorkerId(), ORDER_PLACED + " " + PENDING_WORKER_APPROVAL, istTime.toLocalDateTime(), ACCEPTED + " " + ACCEPTED));
 
 
             // Approve pending order
@@ -122,15 +124,6 @@ public class WorkerActionService {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(approveOrderRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
                 fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_ACCEPTED));
-                return null;
-            });
-
-
-            CompletableFuture<Void> sendNotificationToWorker = approvePendingOrder.thenApplyAsync((Voidd) -> {
-                shopConfigurationHolder.getStoreRiderIds().parallelStream().forEach(userId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, RIDER_ORDER_ASSIGNED_FOR_PICKUP));
-                });
                 return null;
             });
 

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class TokenValidationService implements TokenValidation {
@@ -16,6 +17,7 @@ public class TokenValidationService implements TokenValidation {
     private DatabaseOperationsService databaseOperationsService;
 
     @Override
+    @Transactional(readOnly = true)
     public boolean authTokenValidationFromUserOrMobile(String authToken, String userId, String mobileNumber) {
         try {
             LOGGER.info("authTokenValidationFromUserOrMobile(): Request received to validate the auth token details: authToken: {}, userId: {}, mobileNumber: {}", authToken, userId, mobileNumber);
@@ -34,6 +36,7 @@ public class TokenValidationService implements TokenValidation {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean authTokenValidationFromUserId(String authToken, String userId) {
         try {
             if(!databaseOperationsService.validateAuthToken(userId, authToken)) {

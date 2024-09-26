@@ -14,8 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 
@@ -68,21 +69,21 @@ public class ShopAdminOrderOperationsController {
     }
 
     @PostMapping("/admin/allOrderListForGivenTimeSlot")
-    public ResponseEntity<List<OrderDetails>> allOrderListForGivenTimeSlot(@RequestHeader(value="authToken") String authToken, @RequestBody AllOrderForAGivenSlot allOrderForAGivenSlot) {
-        List<OrderDetails> orderDetailsList;
+    public ResponseEntity<Map<String,List<OrderDetails>>> allOrderListForGivenTimeSlot(@RequestHeader(value="authToken") String authToken, @RequestBody OrderRequestForAGivenTimeSlot orderRequestForAGivenTimeSlot) {
+        Map<String,List<OrderDetails>> orderDetails;
         try {
-            LOGGER.info("allOrderListForGivenTimeSlot(): Get all order details for a given time slot: {} and authToken: {}", toJson(allOrderForAGivenSlot), authToken);
-            orderDetailsList = shopAdminOrderOperationsService.allOrderListForGivenTimeSlot(authToken, allOrderForAGivenSlot);
-            return new ResponseEntity<>(orderDetailsList, HttpStatus.OK);
+            LOGGER.info("allOrderListForGivenTimeSlot(): Get all order details for a given time slot: {} and authToken: {}", toJson(orderRequestForAGivenTimeSlot), authToken);
+            orderDetails = shopAdminOrderOperationsService.allOrderListForGivenTimeSlot(authToken, orderRequestForAGivenTimeSlot);
+            return new ResponseEntity<>(orderDetails, HttpStatus.OK);
         } catch (RecordsValidationException ex) {
-            LOGGER.error("allOrderListForGivenTimeSlot(): Request data validation failed for the input request object: {}, Exception: {}", toJson(allOrderForAGivenSlot), ex.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+            LOGGER.error("allOrderListForGivenTimeSlot(): Request data validation failed for the input request object: {}, Exception: {}", toJson(orderRequestForAGivenTimeSlot), ex.getMessage());
+            return new ResponseEntity<>(new HashMap<>(), HttpStatus.BAD_REQUEST);
         } catch (AuthTokenValidationException ex) {
-            LOGGER.error("allOrderListForGivenTimeSlot(): Auth Validation failed for adminId: {} and authToken: {}, Exception: {}", allOrderForAGivenSlot.adminId(), authToken, ex.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.UNAUTHORIZED);
+            LOGGER.error("allOrderListForGivenTimeSlot(): Auth Validation failed for adminId: {} and authToken: {}, Exception: {}", orderRequestForAGivenTimeSlot.adminId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(new HashMap<>(), HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
-            LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(allOrderForAGivenSlot), ex.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.SERVICE_UNAVAILABLE);
+            LOGGER.error("allOrderListForGivenTimeSlot(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(orderRequestForAGivenTimeSlot), ex.getMessage());
+            return new ResponseEntity<>(new HashMap<>(), HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
 
@@ -100,6 +101,24 @@ public class ShopAdminOrderOperationsController {
             throw new RecordsValidationException(null);
         } catch (Exception ex) {
             LOGGER.error("updateEtaForDeliveryServices(): Exception occurred while updating the updateEtaForDeliveryServices, Exception: %s", ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/shopAdmin/markOrderOutForDelivery")
+    public ResponseEntity<Boolean> markOrderOutForDelivery(@RequestHeader(value="authToken") String authToken, @RequestBody MarkOrderOutForDelivery markOrderOutForDelivery){
+        try {
+            LOGGER.info("markOrderOutForDelivery(): Request received to mark all the order out for delivery for request: {} and authToken: {}", toJson(markOrderOutForDelivery), authToken);
+            shopAdminOrderOperationsService.markOrderOutForDelivery(authToken, markOrderOutForDelivery);
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (AuthTokenValidationException ex) {
+            LOGGER.error("markOrderOutForDelivery(): Auth Validation failed for adminId: {} and authToken: {}, Exception: {}", markOrderOutForDelivery.adminId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("markOrderOutForDelivery(): Request data validation failed for the input request object: {}, Exception: {}", toJson(markOrderOutForDelivery), ex.getMessage());
+            throw new RecordsValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("markOrderOutForDelivery(): Exception occurred while updating the marking the order out for delivery for request: {}, Exception: %s", toJson(markOrderOutForDelivery), ex.getMessage());
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
     }

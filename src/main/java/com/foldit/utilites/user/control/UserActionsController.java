@@ -1,24 +1,18 @@
 package com.foldit.utilites.user.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
-import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
-import com.foldit.utilites.homepage.control.HomePageController;
-import com.foldit.utilites.order.model.OrderDetails;
-import com.foldit.utilites.shopadmin.model.AllOrderForAGivenSlot;
 import com.foldit.utilites.user.model.CancelOrderRequest;
 import com.foldit.utilites.user.model.OnBoardNewUserLocation;
 import com.foldit.utilites.user.model.UserDetails;
 import com.foldit.utilites.user.model.UserLocation;
 import com.foldit.utilites.user.service.UserActionsService;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;

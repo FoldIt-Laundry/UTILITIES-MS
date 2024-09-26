@@ -1,14 +1,21 @@
-
-
--- Enhance the logic for multi party queries
-
 -- Api to reschedule
 
 -- Utility controller to refresh the configurations
 
--- Api to change the admin response
 
--- Api to trigger the admin srarus
+
+-- Change all the queries
+query.addCriteria(
+            Criteria.where("field1").is(field1Value)
+                    .and("field2").is(field2Value)
+                    .and("numericField").gte(minValue)
+        );
+
+// In admin api to get the just fcm token
+-- Need to analyze which one is shorted query whole object and just one field
+
+
+-- Mark order pickup check condition
 
 5) Assigned for rider pickup manually we have to trigger this endpoint
 6) Check to admin order allows to checkout the of current data
