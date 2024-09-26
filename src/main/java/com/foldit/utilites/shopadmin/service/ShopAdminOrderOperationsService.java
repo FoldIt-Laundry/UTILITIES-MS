@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
 import static com.foldit.utilites.helper.CalculateBillDetails.getFinalBillDetailsFromQuantity;
+import static com.foldit.utilites.helper.DateOperations.isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.order.model.WorkflowStatus.*;
 import static com.foldit.utilites.order.model.WorkflowStatus.ORDER_PICKED_UP;
@@ -218,10 +219,9 @@ public class ShopAdminOrderOperationsService {
     @Transactional
     public void markOrderOutForDelivery(String authToken, MarkOrderOutForDelivery orderRequest) {
         try {
-            String defaultShopId = negotiationConfigHolder.getDefaultShopId();
             tokenValidationService.authTokenValidationFromUserId(authToken, orderRequest.adminId());
-            if( validateGivenSlotExistOrNot3(orderRequest) && ) ) {
-                String errorMessage = String.format("markOrderOutForDelivery(): Input provided is null or corrupt for payload: %s for userId: %s",toJson(deliveryRequest), deliveryRequest.getAdminId());
+            if( !shopConfigurationHolder.getStoreAdminIds().contains(orderRequest.adminId()) && validateGivenSlotExistOrNot3(orderRequest) &&  isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot(orderRequest) ) {
+                String errorMessage = String.format("markOrderOutForDelivery(): Input provided is null or corrupt for payload: %s for userId: %s",toJson(orderRequest), orderRequest.adminId());
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
             }
@@ -238,8 +238,6 @@ public class ShopAdminOrderOperationsService {
                     .set("userWorkflowStatus", ASSIGNED_FOR_RIDER_PICKUP)
                     .set("workerRiderWorkflowStatus", ASSIGNED_FOR_RIDER_PICKUP)
                     .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(orderRequest.adminId(), ACCEPTED + " " + ACCEPTED, istTime.toLocalDateTime(), ASSIGNED_FOR_RIDER_PICKUP + " " + ASSIGNED_FOR_RIDER_PICKUP));
-
-
 
             // Send notification to users for order out for pick up
             CompletableFuture<Void> markStatusOfAllOrderInDb = CompletableFuture.supplyAsync(() -> {

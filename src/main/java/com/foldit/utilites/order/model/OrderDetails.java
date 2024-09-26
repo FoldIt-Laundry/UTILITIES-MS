@@ -29,6 +29,9 @@ public class OrderDetails {
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp;
 
+    public OrderDetails() {
+    }
+
     public OrderDetails(String batchSlotTimingsTime) {
         this.batchSlotTimingsTime = batchSlotTimingsTime;
     }
