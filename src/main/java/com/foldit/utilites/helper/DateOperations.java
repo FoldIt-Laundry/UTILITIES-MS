@@ -45,7 +45,7 @@ public class DateOperations {
 
             LocalTime localTime = istTime.toLocalTime();
 
-            LocalTime inputSlotTime = LocalTime.parse(orderRequest.timeSlotTime(), DateTimeFormatter.ofPattern("hh:mm a"));
+            LocalTime inputSlotTime = LocalTime.parse(orderRequest.timeSlotTime().split(" -")[0], DateTimeFormatter.ofPattern("hh:mm a"));
             LocalTime timeSlotTime = LocalTime.parse(inputSlotTime.format(DateTimeFormatter.ofPattern("HH:mm")), DateTimeFormatter.ofPattern("HH:mm"));
 
             LOGGER.info("isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot(): Current timeSlotDate: {} and currentDate: {}; localTime: {} and timeSlotTime", timeSlotDate, currentDate, localTime, timeSlotTime);

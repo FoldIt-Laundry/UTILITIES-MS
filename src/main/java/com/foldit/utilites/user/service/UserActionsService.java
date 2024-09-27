@@ -12,6 +12,8 @@ import com.foldit.utilites.order.model.WorkflowStatus;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
+import com.foldit.utilites.rider.model.RiderDeliveryTask;
+import com.foldit.utilites.shopadmin.model.MarkOrderOutForDelivery;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.store.model.DeliveryFeeCalculatorRequest;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -192,6 +195,73 @@ public class UserActionsService {
         }
     }
 
+    @Transactional
+    public void rescheduleOnGoingOrder(String authToken, RescheduleOrderRequest rescheduleOrderRequest) {
+        try {
+            OrderDetails orderDetailsFromDb = iOrderDetails.findById(rescheduleOrderRequest.orderDetails().getId()).get();
+            databaseOperationsService.validateAuthToken(rescheduleOrderRequest.userId(), authToken);
+            if(orderDetailsFromDb.getWorkerRiderWorkflowStatus().value>4 || orderDetailsFromDb.getUserWorkflowStatus().value>4 || !validateGivenSlotExistOrNot(rescheduleOrderRequest.newTimeSlotDate(), rescheduleOrderRequest.newTimeSlotTime(), PICKUP) ) {
+                String errorMessage = String.format("rescheduleOnGoingOrder(): For userId: %s", rescheduleOrderRequest.userId());
+                LOGGER.error(errorMessage);
+                throw new RecordsValidationException(errorMessage);
+            }
+
+            Query query = new Query(Criteria.where("_id").is(rescheduleOrderRequest.orderDetails().getId()));
+            Update update = new Update()
+                    .set("userWorkflowStatus", PENDING_WORKER_APPROVAL)
+                    .set("workerRiderWorkflowStatus", PENDING_WORKER_APPROVAL)
+                    .addToSet("auditForWorkflowChanges", new WorkflowTransitionDetails(rescheduleOrderRequest.userId(), orderDetailsFromDb.getUserWorkflowStatus() + " " + orderDetailsFromDb.getWorkerRiderWorkflowStatus(), istTime.toLocalDateTime(), PENDING_WORKER_APPROVAL + " " + PENDING_WORKER_APPROVAL));
+
+            CompletableFuture<OrderDetails> updateOrderPickedUpFromCustomerHomeInDb = CompletableFuture.supplyAsync(() -> {
+                UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
+                if (updateResult.getModifiedCount() != 1) {
+                    String errorMessage = String.format("rescheduleOnGoingOrder(): No records gets updated for the query: %s and update: %s and for payload:  %s", toJson(query), toJson(update), toJson(rescheduleOrderRequest));
+                    LOGGER.error(errorMessage);
+                    throw new RecordsValidationException(errorMessage);
+                }
+                orderOperationsInSlotQueue.deleteOrderFromBatchSlotQueues(rescheduleOrderRequest.orderDetails(), PICKUP);
+                rescheduleOrderRequest.orderDetails().setBatchSlotTimingsDate(rescheduleOrderRequest.newTimeSlotDate());
+                rescheduleOrderRequest.orderDetails().setBatchSlotTimingsTime(rescheduleOrderRequest.newTimeSlotTime());
+                orderOperationsInSlotQueue.addOrderIdInAdditionInSlotQueue( rescheduleOrderRequest.orderDetails(),PICKUP);
+                return  null;
+            });
+
+            // Send notification to user
+            CompletableFuture<Void> sendNotificationToUser = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
+                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetailsFromDb.getUserId());
+                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, USER_UPDATE_ORDER_RESCHEDULED));
+                return null;
+            });
+
+            // Send notification to admin
+            CompletableFuture<Void> sendNotificationToAdmin = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
+                shopConfigurationHolder.getStoreAdminIds().forEach(storeAdminId -> {
+                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeAdminId);
+                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, String.format(ADMIN_ORDER_USER_RESCHEDULED_THE_ORDER, orderDetailsFromDb.getId())));
+                });
+                return null;
+            });
+
+            // Send notification to worker
+            CompletableFuture<Void> sendNotificationToWorker = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
+                shopConfigurationHolder.getStoreWorkerIds().forEach(storeWorkerId -> {
+                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeWorkerId);
+                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, WORKER_ORDER_RESCHEDULED_RECEIVED_REQUEST));
+                });
+                return null;
+            });
+
+        } catch (RedisDBException ex) {
+            throw new RedisDBException(ex.getMessage(), ex);
+        } catch (RecordsValidationException ex) {
+            throw new AuthTokenValidationException(ex.getMessage());
+        } catch (AuthTokenValidationException ex) {
+            throw new AuthTokenValidationException(null);
+        } catch (Exception ex) {
+            LOGGER.error("rescheduleOnGoingOrder(): Exception occurred while performing read and write operation for request: {} and authToken: {} from monogoDb, Exception: %s", toJson(rescheduleOrderRequest), authToken, ex.getMessage());
+            throw new MongoDBReadException(ex.getMessage());
+        }
+    }
 
     public DeliveryAndFeeDetails deliveryFeeCalculatorFromDefaultStoreAddress(UserLocation userLocation) {
         try {
@@ -208,6 +278,15 @@ public class UserActionsService {
         } catch (Exception ex) {
             throw new GoogleApiException(ex.getMessage(), ex);
         }
+    }
+
+    public boolean validateGivenSlotExistOrNot(String timeSlotDate, String timeSlotTime, RiderDeliveryTask riderDeliveryTask) {
+        Map<String, Map<RiderDeliveryTask, List<String>>> slotsMap = iGetTimeSlotsForScheduledPickUp.getRiderAdminTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
+        if( slotsMap!=null && slotsMap.containsKey(timeSlotDate) && slotsMap.get(timeSlotDate).containsKey(riderDeliveryTask) && slotsMap.get(timeSlotDate).get(riderDeliveryTask).contains(timeSlotTime) ){
+            return true;
+        }
+        LOGGER.error("validateGivenSlotExistOrNot3(): Given slotsMap: {} and inputTimeSlotDate: {}, inputTimeSlotTime: {} and RiderDeliveryTask: {}", toJson(slotsMap), timeSlotDate, timeSlotTime, riderDeliveryTask);
+        return false;
     }
 
 }

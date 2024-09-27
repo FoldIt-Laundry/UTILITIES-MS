@@ -220,7 +220,8 @@ public class ShopAdminOrderOperationsService {
     public void markOrderOutForDelivery(String authToken, MarkOrderOutForDelivery orderRequest) {
         try {
             tokenValidationService.authTokenValidationFromUserId(authToken, orderRequest.adminId());
-            if( !shopConfigurationHolder.getStoreAdminIds().contains(orderRequest.adminId()) && validateGivenSlotExistOrNot3(orderRequest) &&  isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot(orderRequest) ) {
+            isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot(orderRequest);
+            if( !shopConfigurationHolder.getStoreAdminIds().contains(orderRequest.adminId()) || !validateGivenSlotExistOrNot3(orderRequest) ||  !isAdminAllowedToMarkTheOrderOutForPickupForGivenSlot(orderRequest) ) {
                 String errorMessage = String.format("markOrderOutForDelivery(): Input provided is null or corrupt for payload: %s for userId: %s",toJson(orderRequest), orderRequest.adminId());
                 LOGGER.error(errorMessage);
                 throw new RecordsValidationException(errorMessage);
@@ -242,8 +243,8 @@ public class ShopAdminOrderOperationsService {
             // Send notification to users for order out for pick up
             CompletableFuture<Void> markStatusOfAllOrderInDb = CompletableFuture.supplyAsync(() -> {
                 UpdateResult updateResult = mongoTemplate.updateFirst(query, update, OrderDetails.class);
-                if (updateResult.getModifiedCount() != 1) {
-                    String errorMessage = String.format("markOrderPickedUpFromCustomerHome(): No records gets updated for the query: %s and update: %s and for payload:  %s", toJson(query), toJson(update), toJson(orderRequest));
+                if (updateResult.getModifiedCount() != orderIdsInAGivenSlot.size()) {
+                    String errorMessage = String.format("markOrderOutForDelivery(): No records gets updated for the query: %s and update: %s and for payload:  %s", toJson(query), toJson(update), toJson(orderRequest));
                     LOGGER.error(errorMessage);
                     throw new RecordsValidationException(errorMessage);
                 }
@@ -253,7 +254,7 @@ public class ShopAdminOrderOperationsService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = markStatusOfAllOrderInDb.thenApplyAsync((Void) -> {
-                List<String> userIdsList = iOrderDetails.findAllById(orderIdsInAGivenSlot).stream().map(OrderDetails::getUserId).collect(Collectors.toList());
+                List<String> userIdsList = iOrderDetails.getAllUserIdFromGivenOrderIdList(orderIdsInAGivenSlot).stream().map(OrderDetails::getUserId).distinct().collect(Collectors.toList());
                 List<UserDetails> userDetailsList = iUserDetails.findAllById(userIdsList);
                 userDetailsList.parallelStream().forEach(userDetails -> {
                     fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_OUT_FOR_PICKUP));

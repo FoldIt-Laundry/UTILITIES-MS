@@ -2,29 +2,28 @@ package com.foldit.utilites.order.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Document(collection = "OrderDetails")
 public class WorkflowTransitionDetails {
     private String userId;
     private String statusCurrent;
-    private LocalDateTime currenTimeStamp;
+    private LocalDateTime currentTimeStamp;
     private String statusMarked;
 
-    public WorkflowTransitionDetails(String userId, String statusCurrent, LocalDateTime currenTimeStamp, String statusMarked) {
+    public WorkflowTransitionDetails(String userId, String statusCurrent, LocalDateTime currentTimeStamp, String statusMarked) {
         this.userId = userId;
         this.statusCurrent = statusCurrent;
-        this.currenTimeStamp = currenTimeStamp;
+        this.currentTimeStamp = currentTimeStamp;
         this.statusMarked = statusMarked;
     }
 
-    public LocalDateTime getCurrenTimeStamp() {
-        return currenTimeStamp;
+    public LocalDateTime getCurrentTimeStamp() {
+        return currentTimeStamp;
     }
 
-    public void setCurrenTimeStamp(LocalDateTime currenTimeStamp) {
-        this.currenTimeStamp = currenTimeStamp;
+    public void setCurrentTimeStamp(LocalDateTime currentTimeStamp) {
+        this.currentTimeStamp = currentTimeStamp;
     }
 
     public String getUserId() {

@@ -21,6 +21,7 @@ public class DatabaseOperationsService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Transactional(readOnly = true)
     public boolean validateAuthToken(String userIdVerificationKey,String authToken) {
         try {
             LOGGER.info("validateAuthToken(): Initiating request to validate the userIdVerificationKey: {} and authToken: {}", userIdVerificationKey, authToken);

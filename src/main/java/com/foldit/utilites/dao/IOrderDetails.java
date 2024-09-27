@@ -21,6 +21,12 @@ public interface IOrderDetails extends MongoRepository<OrderDetails, String> {
     List<OrderDetails> getAllActiveOrdersListFromUserId(String userId, List<WorkflowStatus> workflowStatus);
 
     @Aggregation(pipeline = {
+            "{ $match: { '_id': {'$in':  ?0} }}",
+            "{ $project: { 'userId': 1 }}"
+    })
+    List<OrderDetails> getAllUserIdFromGivenOrderIdList(List<String> orderIdList);
+
+    @Aggregation(pipeline = {
             "{ $match: { 'userId': ?0 }},",
             "{ $project: { 'orderDeliveryTimeStamp': 1, 'userAddress': 1, 'shopAddress': 1, 'billDetails.finalPrice': 1, '_id': 1, 'addedService':  1 }}"
     })

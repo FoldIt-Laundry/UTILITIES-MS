@@ -41,6 +41,12 @@ public class SlotsGeneratorForScheduledPickup implements IGetTimeSlotsForSchedul
 
             LocalDate currentDate = istTime.toLocalDate();
             LocalTime currentTime = istTime.toLocalTime().withMinute(0).withSecond(0).withNano(0);
+
+            if(currentTime.getMinute()>44) {
+                currentTime = istTime.toLocalTime().withMinute(0).withSecond(0).withNano(0);
+                currentTime.plusHours(1);
+            }
+
             LocalDate lastDateToChangeSlotTiming = LocalDate.parse(lastDateToChangeTheSlotTimings, dateFormatter);
 
 

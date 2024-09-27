@@ -2,10 +2,7 @@ package com.foldit.utilites.user.control;
 
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.RecordsValidationException;
-import com.foldit.utilites.user.model.CancelOrderRequest;
-import com.foldit.utilites.user.model.OnBoardNewUserLocation;
-import com.foldit.utilites.user.model.UserDetails;
-import com.foldit.utilites.user.model.UserLocation;
+import com.foldit.utilites.user.model.*;
 import com.foldit.utilites.user.service.UserActionsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +83,24 @@ public class UserActionsController {
             return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
         } catch (Exception ex) {
             LOGGER.error("cancelOnGoingOrder(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(cancelOrderRequest), ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.SERVICE_UNAVAILABLE);
+        }
+    }
+
+    @PostMapping("/userActions/rescheduleOnGoingOrder")
+    public ResponseEntity<Boolean> rescheduleOnGoingOrder(@RequestHeader(value="authToken") String authToken, @RequestBody RescheduleOrderRequest rescheduleOrderRequest) {
+        try {
+            LOGGER.info("rescheduleOnGoingOrder(): Initiating request to reschedule on going order the order details: {} and authToken: {}", toJson(rescheduleOrderRequest), authToken);
+            userActionsService.rescheduleOnGoingOrder(authToken, rescheduleOrderRequest);
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (RecordsValidationException ex) {
+            LOGGER.error("rescheduleOnGoingOrder(): Request data validation failed for the input request object: {}, Exception: {}", toJson(rescheduleOrderRequest), ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        } catch (AuthTokenValidationException ex) {
+            LOGGER.error("rescheduleOnGoingOrder(): Auth Validation failed for userId: {} and authToken: {}, Exception: {}", rescheduleOrderRequest.userId(), authToken, ex.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+        } catch (Exception ex) {
+            LOGGER.error("rescheduleOnGoingOrder(): Exception occurred while processing the details for payload: {}, Exception: {}", toJson(rescheduleOrderRequest), ex.getMessage());
             return new ResponseEntity<>(false, HttpStatus.SERVICE_UNAVAILABLE);
         }
     }
