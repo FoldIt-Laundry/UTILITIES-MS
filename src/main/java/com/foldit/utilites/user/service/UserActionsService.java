@@ -2,24 +2,24 @@ package com.foldit.utilites.user.service;
 
 import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.dao.IStoreDetails;
+import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.*;
-import com.foldit.utilites.firebase.model.NotificationMessageRequest;
-import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowStatus;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
+import com.foldit.utilites.notification.interfaces.ISendNotification;
+import com.foldit.utilites.notification.model.NotificationRequest;
+import com.foldit.utilites.notification.service.FireBaseNotificationService;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
+import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.rider.model.RiderDeliveryTask;
-import com.foldit.utilites.shopadmin.model.MarkOrderOutForDelivery;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.store.model.DeliveryFeeCalculatorRequest;
 import com.foldit.utilites.store.model.StoreDetails;
-import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
-import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.user.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.lang3.StringUtils;
@@ -43,9 +43,8 @@ import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
 import static com.foldit.utilites.helper.GoogleMatrixForDeliveryFee.getDeliveryFeeAndDistanceDetails;
 import static com.foldit.utilites.helper.JsonPrinter.toJson;
-import static com.foldit.utilites.order.model.WorkflowStatus.*;
-import static com.foldit.utilites.order.model.WorkflowStatus.ORDER_PICKED_UP;
-import static com.foldit.utilites.rider.model.RiderDeliveryTask.DROP;
+import static com.foldit.utilites.order.model.WorkflowStatus.CANCELLED;
+import static com.foldit.utilites.order.model.WorkflowStatus.PENDING_WORKER_APPROVAL;
 import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
 
 @Service
@@ -66,22 +65,23 @@ public class UserActionsService {
     @Autowired
     private ShopConfigurationHolder shopConfigurationHolder;
     @Autowired
-    private FireBaseMessageSenderService fireBaseMessageSenderService;
-    @Autowired
     private MongoTemplate mongoTemplate;
     private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
     private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
+    private final ISendNotification iSendNotification;
 
-    public UserActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService, @Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup){
+    public UserActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService, @Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup, @Autowired
+    FireBaseNotificationService notificationService) {
         this.orderOperationsInSlotQueue = orderIdService;
         this.iGetTimeSlotsForScheduledPickUp = slotsGeneratorForScheduledPickup;
+        this.iSendNotification = notificationService;
     }
 
     @Transactional
     public OnBoardNewUserLocation saveNewUserLocation(OnBoardNewUserLocation onBoardNewUserLocation, String authToken) {
         UserLocation userLocation;
         try {
-            if(!databaseOperationsService.validateAuthToken(onBoardNewUserLocation.getUserId(), authToken)) {
+            if (!databaseOperationsService.validateAuthToken(onBoardNewUserLocation.getUserId(), authToken)) {
                 LOGGER.error("Auth token: {}, Validation failed", authToken);
                 throw new AuthTokenValidationException(null);
             }
@@ -169,17 +169,13 @@ public class UserActionsService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetailsFromDb.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_CANCELLED, USER_UPDATE_ORDER_CANCELLED));
+                iSendNotification.sendToUser(new NotificationRequest(ORDER_CANCELLED, USER_UPDATE_ORDER_CANCELLED), orderDetailsFromDb.getUserId());
                 return null;
             });
 
             // Send notification to admin
             CompletableFuture<Void> sendNotificationToAdmin = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Voidd) -> {
-                shopConfigurationHolder.getStoreAdminIds().forEach(storeAdminId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeAdminId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_CANCELLED, String.format(ADMIN_ORDER_USER_CANCELLED_THE_ORDER, cancelOrderRequest.orderDetails().getId())));
-                });
+                iSendNotification.sendToUserList(new NotificationRequest(ORDER_CANCELLED, String.format(ADMIN_ORDER_USER_CANCELLED_THE_ORDER, cancelOrderRequest.orderDetails().getId())), shopConfigurationHolder.getStoreAdminIds());
                 return null;
             });
 
@@ -228,26 +224,19 @@ public class UserActionsService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetailsFromDb.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, USER_UPDATE_ORDER_RESCHEDULED));
+                iSendNotification.sendToUser(new NotificationRequest(ORDER_RESCHEDULED, USER_UPDATE_ORDER_RESCHEDULED), orderDetailsFromDb.getUserId());
                 return null;
             });
 
             // Send notification to admin
             CompletableFuture<Void> sendNotificationToAdmin = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                shopConfigurationHolder.getStoreAdminIds().forEach(storeAdminId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeAdminId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, String.format(ADMIN_ORDER_USER_RESCHEDULED_THE_ORDER, orderDetailsFromDb.getId())));
-                });
+                iSendNotification.sendToUserList(new NotificationRequest(ORDER_RESCHEDULED, String.format(ADMIN_ORDER_USER_RESCHEDULED_THE_ORDER, orderDetailsFromDb.getId())), shopConfigurationHolder.getStoreAdminIds());
                 return null;
             });
 
             // Send notification to worker
             CompletableFuture<Void> sendNotificationToWorker = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                shopConfigurationHolder.getStoreWorkerIds().forEach(storeWorkerId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeWorkerId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_RESCHEDULED, WORKER_ORDER_RESCHEDULED_RECEIVED_REQUEST));
-                });
+                iSendNotification.sendToUserList(new NotificationRequest(ORDER_RESCHEDULED, WORKER_ORDER_RESCHEDULED_RECEIVED_REQUEST), shopConfigurationHolder.getStoreWorkerIds());
                 return null;
             });
 

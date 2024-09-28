@@ -21,3 +21,5 @@
 2) Transactional code
 3) Interface segregation and all
 4) Data checks and all
+5) Proper logging
+6) Https

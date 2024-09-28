@@ -7,20 +7,17 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.exception.RecordsValidationException;
 import com.foldit.utilites.exception.RedisDBException;
-import com.foldit.utilites.firebase.model.NotificationMessageRequest;
-import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.OrderDetails;
 import com.foldit.utilites.order.model.WorkflowTransitionDetails;
+import com.foldit.utilites.notification.interfaces.ISendNotification;
+import com.foldit.utilites.notification.model.NotificationRequest;
+import com.foldit.utilites.notification.service.FireBaseNotificationService;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
 import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
-import com.foldit.utilites.rider.model.MarkOrderOutForDeliveryRequest;
-import com.foldit.utilites.rider.model.MarkOrderPickedUpRequest;
-import com.foldit.utilites.rider.model.NextPickUpDropOrderDetailsRequest;
-import com.foldit.utilites.rider.model.OrderDeliveredRequest;
-import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.redisdboperation.service.TokenValidationService;
+import com.foldit.utilites.rider.model.*;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.user.model.UserDetails;
@@ -43,8 +40,8 @@ import java.util.concurrent.CompletableFuture;
 
 import static com.foldit.utilites.constant.OrderRelatedConstant.*;
 import static com.foldit.utilites.constant.TimeStamp.istTime;
-import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.helper.DateOperations.validateTheDateFormat;
+import static com.foldit.utilites.helper.JsonPrinter.toJson;
 import static com.foldit.utilites.order.model.WorkflowStatus.*;
 import static com.foldit.utilites.rider.model.RiderDeliveryTask.DROP;
 import static com.foldit.utilites.rider.model.RiderDeliveryTask.PICKUP;
@@ -66,15 +63,15 @@ public class RiderActionsService {
     @Autowired
     private ShopConfigurationHolder shopConfigurationHolder;
     @Autowired
-    private FireBaseMessageSenderService fireBaseMessageSenderService;
-    @Autowired
     private TokenValidationService tokenValidationService;
     private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
     private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
+    private final ISendNotification iSendNotification;
 
-    public RiderActionsService(@Autowired OrderOperationsInSlotQueueService orderIdService, @Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup){
+    public RiderActionsService(@Autowired FireBaseNotificationService notificationService, @Autowired OrderOperationsInSlotQueueService orderIdService, @Autowired SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup) {
         this.orderOperationsInSlotQueue = orderIdService;
         this.iGetTimeSlotsForScheduledPickUp = slotsGeneratorForScheduledPickup;
+        this.iSendNotification = notificationService;
     }
 
     @Transactional
@@ -196,17 +193,13 @@ public class RiderActionsService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Void) -> {
-                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PICKED_UP));
+                iSendNotification.sendToUser(new NotificationRequest(ORDER_UPDATE, USER_UPDATE_ORDER_PICKED_UP), orderDetails.getUserId());
                 return null;
             });
 
             // Send notification to admin
             CompletableFuture<Void> sendNotificationToAdmin = updateOrderPickedUpFromCustomerHomeInDb.thenApplyAsync((Voidd) -> {
-                shopConfigurationHolder.getStoreAdminIds().forEach(storeAdminId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(storeAdminId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, String.format(ADMIN_ORDER_RIDER_PICKED_UP_THE_ORDER, orderRequest.getOrderId())));
-                });
+                iSendNotification.sendToUserList(new NotificationRequest(ORDER_UPDATE, String.format(ADMIN_ORDER_RIDER_PICKED_UP_THE_ORDER, orderRequest.getOrderId())), shopConfigurationHolder.getStoreAdminIds());
                 return null;
             });
 
@@ -260,7 +253,7 @@ public class RiderActionsService {
             CompletableFuture<Void> sendNotificationToUser = markOrderOutForDelivery.thenApplyAsync((Void) -> {
                 OrderDetails orderDetails = iOrderDetails.getUserIdFromOrderId(deliveryRequest.getOrderId());
                 UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_OUT_FOR_DELIVERY, String.format(USER_UPDATE_ORDER_OUT_FOR_DELIVERY, userDetails.getCheckOutOtp())));
+                iSendNotification.sendToUser(new NotificationRequest(ORDER_OUT_FOR_DELIVERY, String.format(USER_UPDATE_ORDER_OUT_FOR_DELIVERY, userDetails.getCheckOutOtp())), orderDetails.getUserId());
                 return null;
             });
 
@@ -312,17 +305,13 @@ public class RiderActionsService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = markOrderOutForDelivery.thenApplyAsync((Void) -> {
-                UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(orderDetails.getUserId());
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_DELIVERED, USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY));
+                iSendNotification.sendToUser(new NotificationRequest(ORDER_DELIVERED, USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY), orderDetails.getUserId());
                 return null;
             });
 
             // Send notification to Admin
             CompletableFuture<Void> sendNotificationToAdmin = markOrderOutForDelivery.thenApplyAsync((Voidd) -> {
-                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
-                    UserDetails userDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_DELIVERED, USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY));
-                });
+                iSendNotification.sendToUserList(new NotificationRequest(ORDER_DELIVERED, USER_UPDATE_ORDER_DELIVERED_SUCCESSFULLY), shopConfigurationHolder.getStoreAdminIds());
                 return null;
             });
 

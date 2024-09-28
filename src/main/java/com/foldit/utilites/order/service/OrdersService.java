@@ -1,25 +1,23 @@
 package com.foldit.utilites.order.service;
 
-import com.foldit.utilites.dao.IStoreDetails;
+import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.dao.IUserDetails;
 import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.MongoDBReadException;
-import com.foldit.utilites.dao.IOrderDetails;
 import com.foldit.utilites.exception.RecordsValidationException;
-import com.foldit.utilites.firebase.model.NotificationMessageRequest;
-import com.foldit.utilites.firebase.service.FireBaseMessageSenderService;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
 import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.order.model.BasicOrderDetails;
 import com.foldit.utilites.order.model.GetOrderDetailsFromOrderIdReq;
 import com.foldit.utilites.order.model.OrderDetails;
+import com.foldit.utilites.notification.interfaces.ISendNotification;
+import com.foldit.utilites.notification.model.NotificationRequest;
+import com.foldit.utilites.notification.service.FireBaseNotificationService;
 import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueue;
-import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
-import com.foldit.utilites.rider.model.RiderDeliveryTask;
-import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
+import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
+import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.user.model.UserDetails;
-import com.mongodb.client.result.UpdateResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +42,6 @@ public class OrdersService {
     @Autowired
     private DatabaseOperationsService databaseOperationsService;
     @Autowired
-    private FireBaseMessageSenderService fireBaseMessageSenderService;
-    @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
     @Autowired
     private SlotsGeneratorForScheduledPickup slotsGeneratorForScheduledPickup;
@@ -55,13 +51,13 @@ public class OrdersService {
     private IOrderDetails iOrderDetails;
     @Autowired
     private IUserDetails iUserDetails;
-    @Autowired
-    private IStoreDetails iStoreDetails;
 
     private OrderOperationsInSlotQueue orderOperationsInSlotQueue;
+    private final ISendNotification sendNotification;
 
-    public OrdersService(@Autowired OrderOperationsInSlotQueueService orderIdService){
+    public OrdersService(@Autowired FireBaseNotificationService notificationService, @Autowired OrderOperationsInSlotQueueService orderIdService) {
         this.orderOperationsInSlotQueue = orderIdService;
+        this.sendNotification = notificationService;
     }
 
 
@@ -139,25 +135,19 @@ public class OrdersService {
 
             // Send notification to user
             CompletableFuture<Void> sendNotificationToUser = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
-                fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(userDetails.getFcmToken(), ORDER_UPDATE, USER_UPDATE_ORDER_PLACED));
+                sendNotification.sendToUser(new NotificationRequest(ORDER_UPDATE, USER_UPDATE_ORDER_PLACED), userDetails.getId());
                 return null;
             });
 
             // Send notification to worker
             CompletableFuture<Void> sendNotificationToWorker = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
-                shopConfigurationHolder.getStoreWorkerIds().parallelStream().forEach(userId -> {
-                    UserDetails workerUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(workerUserDetails.getFcmToken(), ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST));
-                });
+                sendNotification.sendToUserList(new NotificationRequest(ORDER_UPDATE, WORKER_ORDER_RECEIVED_REQUEST), shopConfigurationHolder.getStoreWorkerIds());
                 return null;
             });
 
             // Send notification to admin
             CompletableFuture<Void> sendNotificationToAdmin = orderDetailsInsertedInDb.thenApplyAsync((OrderDetails) -> {
-                shopConfigurationHolder.getStoreAdminIds().parallelStream().forEach(userId -> {
-                    UserDetails adminUserDetails = iUserDetails.getFcmTokenFromUserId(userId);
-                    fireBaseMessageSenderService.sendPushNotification(new NotificationMessageRequest(adminUserDetails.getFcmToken(), ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST));
-                });
+                sendNotification.sendToUserList(new NotificationRequest(ORDER_UPDATE, ADMIN_ORDER_RECEIVED_REQUEST), shopConfigurationHolder.getStoreAdminIds());
                 return null;
             });
 

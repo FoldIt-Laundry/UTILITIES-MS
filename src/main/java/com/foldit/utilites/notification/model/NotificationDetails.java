@@ -1,19 +1,13 @@
-package com.foldit.utilites.firebase.model;
+package com.foldit.utilites.notification.model;
 
 import java.util.Map;
 
-public class NotificationMessageRequest {
+public class NotificationDetails {
     private String fcmToken;
     private String title;
     private String body;
     private String image;
     private Map<String,String> data;
-
-    public NotificationMessageRequest(String fcmToken, String title, String body) {
-        this.fcmToken = fcmToken;
-        this.title = title;
-        this.body = body;
-    }
 
     public String getFcmToken() {
         return fcmToken;
