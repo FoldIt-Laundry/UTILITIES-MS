@@ -159,9 +159,9 @@ public class WorkerActionService {
             }
             Query query = new Query(Criteria.
                     where("_id").is(markWorkInProgressRequest.getOrderId())
-                    .where("storeId").is(markWorkInProgressRequest.getStoreId())
-                    .where("userWorkflowStatus").is(ACCEPTED)
-                    .where("workerRiderWorkflowStatus").is(ORDER_PICKED_UP));
+                    .and("storeId").is(markWorkInProgressRequest.getStoreId())
+                    .and("userWorkflowStatus").is(ACCEPTED)
+                    .and("workerRiderWorkflowStatus").is(ORDER_PICKED_UP));
             Update update = new Update()
                     .set("userWorkflowStatus", MAGIC_IN_PROGRESS)
                     .set("workerRiderWorkflowStatus", IN_STORE)
@@ -222,9 +222,9 @@ public class WorkerActionService {
 
             Query query = new Query(Criteria.
                     where("_id").is(markOrderReadyForDeliveryRequest.getOrderId())
-                    .where("storeId").is(markOrderReadyForDeliveryRequest.getStoreId())
-                    .where("userWorkflowStatus").is(MAGIC_IN_PROGRESS)
-                    .where("workerRiderWorkflowStatus").is(IN_STORE));
+                    .and("storeId").is(markOrderReadyForDeliveryRequest.getStoreId())
+                    .and("userWorkflowStatus").is(MAGIC_IN_PROGRESS)
+                    .and("workerRiderWorkflowStatus").is(IN_STORE));
             Update update = new Update()
                     .set("userWorkflowStatus", READY_FOR_DELIVERY)
                     .set("workerRiderWorkflowStatus", READY_FOR_DELIVERY)

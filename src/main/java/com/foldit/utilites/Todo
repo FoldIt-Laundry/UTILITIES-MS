@@ -1,5 +1,23 @@
 -- Utility controller to refresh the configurations
 
-To test :-
 
-1) Cancelling the order for given timestamp
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Things to do after 18th
+
+0) Efficient query
+1)  Load Testing
+2) Transactional code
+3) Interface segregation and all
+4) Data checks and all

@@ -141,7 +141,7 @@ public class ShopAdminOrderOperationsService {
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional()
     public void changOrderQueueForRiderPickUpAndDrop(String authToken, ChangeRiderPickUpDeliveryOrderQueue orderQueueRequest) {
         PickUpAndDeliverySlotsResponse pickUpAndDeliverySlotsResponse = new PickUpAndDeliverySlotsResponse();
         try {

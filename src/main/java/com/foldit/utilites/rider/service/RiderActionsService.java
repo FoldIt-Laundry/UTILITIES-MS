@@ -175,8 +175,8 @@ public class RiderActionsService {
 
             Query query = new Query(Criteria
                     .where("_id").is(orderRequest.getOrderId())
-                    .where("userWorkflowStatus").is(ACCEPTED)
-                    .where("workerRiderWorkflowStatus").is(ASSIGNED_FOR_RIDER_PICKUP));
+                    .and("userWorkflowStatus").is(ACCEPTED)
+                    .and("workerRiderWorkflowStatus").is(ASSIGNED_FOR_RIDER_PICKUP));
             Update update = new Update()
                     .set("userWorkflowStatus", ORDER_PICKED_UP)
                     .set("workerRiderWorkflowStatus", ORDER_PICKED_UP)
@@ -236,9 +236,9 @@ public class RiderActionsService {
 
             Query query = new Query(Criteria.
                     where("_id").is(deliveryRequest.getOrderId())
-                    .where("storeId").is(deliveryRequest.getStoreId())
-                    .where("userWorkflowStatus").is(READY_FOR_DELIVERY)
-                    .where("workerRiderWorkflowStatus").is(READY_FOR_DELIVERY));
+                    .and("storeId").is(deliveryRequest.getStoreId())
+                    .and("userWorkflowStatus").is(READY_FOR_DELIVERY)
+                    .and("workerRiderWorkflowStatus").is(READY_FOR_DELIVERY));
             Update update = new Update()
                     .set("userWorkflowStatus", OUT_FOR_DELIVERY)
                     .set("workerRiderWorkflowStatus", OUT_FOR_DELIVERY)
@@ -290,9 +290,9 @@ public class RiderActionsService {
 
             Query query = new Query(Criteria.
                     where("_id").is(deliveryRequest.getOrderId())
-                    .where("storeId").is(deliveryRequest.getStoreId())
-                    .where("userWorkflowStatus").is(OUT_FOR_DELIVERY)
-                    .where("workerRiderWorkflowStatus").is(OUT_FOR_DELIVERY));
+                    .and("storeId").is(deliveryRequest.getStoreId())
+                    .and("userWorkflowStatus").is(OUT_FOR_DELIVERY)
+                    .and("workerRiderWorkflowStatus").is(OUT_FOR_DELIVERY));
             Update update = new Update()
                     .set("userWorkflowStatus", DELIVERED)
                     .set("workerRiderWorkflowStatus", DELIVERED)
