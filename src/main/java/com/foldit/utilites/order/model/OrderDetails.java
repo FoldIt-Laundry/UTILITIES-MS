@@ -1,6 +1,7 @@
 package com.foldit.utilites.order.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.foldit.utilites.store.model.SlotsSegregation;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -26,10 +27,19 @@ public class OrderDetails {
     private Double rating;
     private String batchSlotTimingsDate;
     private String batchSlotTimingsTime;
+    private SlotsSegregation slotTime;
     private Double timeLeftForDelivery = 8.00;
     private String checkOutOtp;
 
     public OrderDetails() {
+    }
+
+    public SlotsSegregation getSlotTime() {
+        return slotTime;
+    }
+
+    public void setSlotTime(SlotsSegregation slotTime) {
+        this.slotTime = slotTime;
     }
 
     public OrderDetails(String batchSlotTimingsTime) {

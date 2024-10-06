@@ -5,6 +5,7 @@ import com.foldit.utilites.exception.AuthTokenValidationException;
 import com.foldit.utilites.exception.GoogleApiException;
 import com.foldit.utilites.exception.MongoDBReadException;
 import com.foldit.utilites.negotiationconfigholder.NegotiationConfigHolder;
+import com.foldit.utilites.negotiationconfigholder.ShopConfigurationHolder;
 import com.foldit.utilites.store.interfaces.IGetTimeSlotsForScheduledPickUp;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
 import com.foldit.utilites.store.model.*;
@@ -42,6 +43,8 @@ public class StoreService {
     private IStoreDetails iStoreDetails;
     @Autowired
     private NegotiationConfigHolder negotiationConfigHolder;
+    @Autowired
+    private ShopConfigurationHolder shopConfigurationHolder;
     private IGetTimeSlotsForScheduledPickUp iGetTimeSlotsForScheduledPickUp;
     private TokenValidation tokenValidation;
 
@@ -84,7 +87,7 @@ public class StoreService {
         AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, availableTimeSlotsRequest.getUserId(), availableTimeSlotsRequest.getMobileNumber());
-            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickUp(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
+            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickupDurationWise(availableTimeSlotsRequest.getShopOpeningTime(), availableTimeSlotsRequest.getShopClosingTime()));
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);
         } catch (Exception ex) {
@@ -98,8 +101,7 @@ public class StoreService {
         AvailableTimeSlotsForScheduledPickupResponse timeSlotsResponse = new AvailableTimeSlotsForScheduledPickupResponse();
         try {
             tokenValidation.authTokenValidationFromUserOrMobile(authToken, userId, mobileNumber);
-            StoreDetails storeDetails = iStoreDetails.getShopTimingsFromStoreId(negotiationConfigHolder.getDefaultShopId());
-            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickUp(storeDetails.getOperatingHourStartTime(), storeDetails.getOperatingHourEndTime()));
+            timeSlotsResponse.setAvailableSlots(iGetTimeSlotsForScheduledPickUp.getUserTimeSlotsForScheduledPickupDurationWise(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime()));
             return timeSlotsResponse;
         } catch (AuthTokenValidationException ex) {
             throw new AuthTokenValidationException(null);

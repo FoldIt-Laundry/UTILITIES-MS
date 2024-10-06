@@ -8,13 +8,13 @@ import java.util.Map;
 
 public class AvailableTimeSlotsForScheduledPickupResponse {
 
-    private Map<String, List<String>> availableSlots;
+    private  Map<String,Map<SlotsSegregation,List<String>>> availableSlots;
 
-    public Map<String, List<String>> getAvailableSlots() {
+    public  Map<String,Map<SlotsSegregation,List<String>>> getAvailableSlots() {
         return availableSlots;
     }
 
-    public void setAvailableSlots(Map<String, List<String>> availableSlots) {
+    public void setAvailableSlots( Map<String,Map<SlotsSegregation,List<String>>> availableSlots) {
         this.availableSlots = availableSlots;
     }
 }

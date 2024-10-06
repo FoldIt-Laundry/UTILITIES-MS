@@ -17,6 +17,7 @@ import com.foldit.utilites.redisdboperation.interfaces.OrderOperationsInSlotQueu
 import com.foldit.utilites.redisdboperation.service.DatabaseOperationsService;
 import com.foldit.utilites.redisdboperation.service.OrderOperationsInSlotQueueService;
 import com.foldit.utilites.store.interfacesimp.SlotsGeneratorForScheduledPickup;
+import com.foldit.utilites.store.model.SlotsSegregation;
 import com.foldit.utilites.user.model.UserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +102,8 @@ public class OrdersService {
     }
 
     boolean verifyTheInputSlotsAndTimings(OrderDetails orderDetails) {
-        Map<String, List<String>> slotTimingMap = slotsGeneratorForScheduledPickup.getUserTimeSlotsForScheduledPickUp(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
-        if(slotTimingMap.containsKey(orderDetails.getBatchSlotTimingsDate()) && slotTimingMap.get(orderDetails.getBatchSlotTimingsDate()).contains(orderDetails.getBatchSlotTimingsTime())) {
+        Map<String,Map<SlotsSegregation,List<String>>> slotTimingMap = slotsGeneratorForScheduledPickup.getUserTimeSlotsForScheduledPickupDurationWise(shopConfigurationHolder.getShopOpeningTime(), shopConfigurationHolder.getShopClosingTime());
+        if(slotTimingMap.containsKey(orderDetails.getBatchSlotTimingsDate()) && slotTimingMap.get(orderDetails.getBatchSlotTimingsDate()).containsKey(orderDetails.getSlotTime()) && slotTimingMap.get(orderDetails.getBatchSlotTimingsDate()).get(orderDetails.getSlotTime()).contains(orderDetails.getBatchSlotTimingsTime())) {
             return true;
         }
         return false;
